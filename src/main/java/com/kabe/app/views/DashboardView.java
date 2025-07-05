@@ -1,4 +1,4 @@
-package com.kabe.app.view;
+package com.kabe.app.views;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -12,6 +12,8 @@ import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import com.kabe.app.models.User;
 
 public class DashboardView {
     private Stage stage;
@@ -57,7 +59,7 @@ public class DashboardView {
         root.setLeft(sidebar);
         root.setCenter(mainContent);
         
-        scene = new Scene(root, 1400, 900);
+        scene = new Scene(root, 1200, 800);
         stage.setTitle("Akademiya - Dashboard");
         stage.setScene(scene);
     }

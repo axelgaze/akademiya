@@ -1,6 +1,7 @@
 package com.kabe.app;
 
-import com.kabe.app.view.*;
+import com.kabe.app.views.*;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 

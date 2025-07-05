@@ -1,4 +1,4 @@
-package com.kabe.app.view;
+package com.kabe.app.views;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -92,7 +92,7 @@ public class KelasView {
         root.setLeft(sidebar);
         root.setCenter(mainContent);
         
-        scene = new Scene(root, 1400, 900);
+        scene = new Scene(root, 1200, 800);
         stage.setTitle("Akademiya - Kelas");
         stage.setScene(scene);
     }
@@ -165,8 +165,6 @@ public class KelasView {
             }
         });
     
-
-        
         // User info at bottom
         VBox userInfo = new VBox(10);
         userInfo.setAlignment(Pos.CENTER);

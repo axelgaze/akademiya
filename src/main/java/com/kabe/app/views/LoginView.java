@@ -1,4 +1,4 @@
-package com.kabe.app.view;
+package com.kabe.app.views;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
@@ -18,6 +18,10 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import com.kabe.app.dao.UserDAO;
+import com.kabe.app.models.User;
+import com.kabe.app.controllers.LoginController;
+
 public class LoginView {
     private Stage stage;
     private Scene scene;
@@ -26,6 +30,8 @@ public class LoginView {
     private VBox registerForm;
     private boolean isLoginMode = true;
     private Runnable onLoginSuccess;
+    private UserDAO userDAO = new UserDAO();
+    private Button loginButton;
 
     public void setOnLoginSuccess(Runnable onLoginSuccess) {
         this.onLoginSuccess = onLoginSuccess;
@@ -76,7 +82,7 @@ public class LoginView {
         createRegisterForm();
         
         // Form container
-        StackPane formContainer = new StackPane();
+        StackPane formContainer     = new StackPane();
         formContainer.getChildren().addAll(registerForm, loginForm);
         
         // Toggle buttons
@@ -88,6 +94,10 @@ public class LoginView {
         scene = new Scene(root, 1200, 800);
         stage.setTitle("Akademiya - Login");
         stage.setScene(scene);
+    }
+
+    public Button getLoginButton() {
+        return loginButton;
     }
     
     private void createLoginForm() {
@@ -116,11 +126,14 @@ public class LoginView {
         PasswordField passwordField = createStyledPasswordField("Password");
         
         // Login button
-        Button loginButton = createStyledButton("MASUK", Color.web("#4CAF50"));
+        loginButton = createStyledButton("MASUK", Color.web("#4CAF50"));
 
         loginButton.setOnAction(e -> {
             // Validasi login (dummy)
-            if (onLoginSuccess != null) {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+
+            if (userDAO.authenticate(username, password) != null) {
                 onLoginSuccess.run();
             }
         });
@@ -193,9 +206,29 @@ public class LoginView {
         // Register button
         Button registerButton = createStyledButton("DAFTAR", Color.web("#66BB6A"));
         
+        // Add to database
+        registerButton.setOnAction(e -> {
+            // Validasi login (dummy)
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            String email = emailField.getText();
+            String fullName = fullNameField.getText();
+            
+            RadioButton selectedRole = (RadioButton) roleGroup.getSelectedToggle();
+            String role = selectedRole.getText();
+
+            User user = new User(username, password, fullName, email, role);
+
+            if (userDAO.register(user) != false) {
+                switchToLogin();
+            }
+        });
+
         registerForm.getChildren().addAll(formTitle, fullNameField, usernameField, 
                                          emailField, passwordField, confirmPasswordField,
                                          roleLabel, roleContainer, registerButton);
+
+        
     }
     
     private TextField createStyledTextField(String placeholder) {

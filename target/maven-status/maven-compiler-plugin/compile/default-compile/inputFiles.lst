@@ -1,6 +1,10 @@
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\LoginController.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\dao\UserDAO.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\MainApp.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\view\CalendarView.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\view\DashboardView.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\view\KelasView.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\view\LoginView.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\view\TasksView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\User.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\utils\DatabaseConnector.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\CalendarView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\DashboardView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\KelasView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\LoginView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\TasksView.java

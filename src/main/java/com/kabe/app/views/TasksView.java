@@ -1,4 +1,4 @@
-package com.kabe.app.view;
+package com.kabe.app.views;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -65,7 +65,7 @@ public class TasksView {
         root.setLeft(sidebar);
         root.setCenter(mainContent);
         
-        scene = new Scene(root, 1400, 900);
+        scene = new Scene(root, 1200, 800);
         stage.setTitle("Akademiya - Tugas");
         stage.setScene(scene);
     }
