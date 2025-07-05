@@ -164,6 +164,13 @@ public class KelasView {
                 navigationHandler.handleNavigation("Kalender");
             }
         });
+
+        profileBtn.setOnAction(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("Profile");
+            }
+        });
+        
     
         // User info at bottom
         VBox userInfo = new VBox(10);
@@ -187,7 +194,13 @@ public class KelasView {
                           "-fx-background-radius: 8; " +
                           "-fx-text-fill: white; " +
                           "-fx-cursor: hand;");
-        
+
+        logoutBtn.setOnAction(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("Logout");
+            }
+        });
+                
         userInfo.getChildren().addAll(userAvatar, userName, userRole, logoutBtn);
         
         sidebar.getChildren().addAll(logoContainer, navigationMenu, userInfo);

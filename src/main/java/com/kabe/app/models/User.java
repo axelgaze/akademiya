@@ -11,6 +11,14 @@ public class User {
     // Constructor, getters, and setters
     public User() {}
     
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+        this.fullName = "";
+        this.email = "";
+        this.role = "";
+    }
+    
     public User(String username, String password, String fullName, String email, String role) {
         this.username = username;
         this.password = password;

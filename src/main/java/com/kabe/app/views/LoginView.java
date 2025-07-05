@@ -20,7 +20,6 @@ import javafx.util.Duration;
 
 import com.kabe.app.dao.UserDAO;
 import com.kabe.app.models.User;
-import com.kabe.app.controllers.LoginController;
 
 public class LoginView {
     private Stage stage;
@@ -32,15 +31,34 @@ public class LoginView {
     private Runnable onLoginSuccess;
     private UserDAO userDAO = new UserDAO();
     private Button loginButton;
+    private Button registerButton;
+    private User user;
+
+    private TextField loginUsernameField;
+    private PasswordField loginPasswordField;
+
+    private TextField regFullNameField;
+    private TextField regUsernameField;
+    private TextField regEmailField;
+    private PasswordField regPasswordField;
+    private PasswordField regConfirmPasswordField;
+    private RadioButton studentRadio;
+
 
     public void setOnLoginSuccess(Runnable onLoginSuccess) {
         this.onLoginSuccess = onLoginSuccess;
+    }
+
+    public Runnable getOnLoginSuccess() {
+        return onLoginSuccess;
     }
     
     public LoginView(Stage stage) {
         this.stage = stage;
         initializeView();
     }
+
+    public LoginView() {}
     
     private void initializeView() {
         root = new StackPane();
@@ -97,7 +115,23 @@ public class LoginView {
     }
 
     public Button getLoginButton() {
-        return loginButton;
+        return this.loginButton;
+    }
+
+    public Button getRegisterButton() {
+        return this.registerButton;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     private void createLoginForm() {
@@ -120,23 +154,13 @@ public class LoginView {
         formTitle.setTextFill(Color.web("#E8F5E8"));
         
         // Username field
-        TextField usernameField = createStyledTextField("Username");
+        loginUsernameField = createStyledTextField("Username");
         
         // Password field
-        PasswordField passwordField = createStyledPasswordField("Password");
+        loginPasswordField = createStyledPasswordField("Password");
         
         // Login button
         loginButton = createStyledButton("MASUK", Color.web("#4CAF50"));
-
-        loginButton.setOnAction(e -> {
-            // Validasi login (dummy)
-            String username = usernameField.getText();
-            String password = passwordField.getText();
-
-            if (userDAO.authenticate(username, password) != null) {
-                onLoginSuccess.run();
-            }
-        });
                 
         // Forgot password link
         Label forgotPasswordLabel = new Label("Lupa password?");
@@ -144,7 +168,7 @@ public class LoginView {
         forgotPasswordLabel.setFont(Font.font("Arial", 12));
         forgotPasswordLabel.setStyle("-fx-cursor: hand;");
         
-        loginForm.getChildren().addAll(formTitle, usernameField, passwordField, 
+        loginForm.getChildren().addAll(formTitle, loginUsernameField, loginPasswordField, 
                                       loginButton, forgotPasswordLabel);
     }
     
@@ -169,19 +193,19 @@ public class LoginView {
         formTitle.setTextFill(Color.web("#E8F5E8"));
         
         // Full name field
-        TextField fullNameField = createStyledTextField("Nama Lengkap");
+        regFullNameField = createStyledTextField("Nama Lengkap");
         
         // Username field
-        TextField usernameField = createStyledTextField("Username");
+        regUsernameField = createStyledTextField("Username");
         
         // Email field
-        TextField emailField = createStyledTextField("Email");
+        regEmailField = createStyledTextField("Email");
         
         // Password field
-        PasswordField passwordField = createStyledPasswordField("Password");
+        regPasswordField = createStyledPasswordField("Password");
         
         // Confirm password field
-        PasswordField confirmPasswordField = createStyledPasswordField("Konfirmasi Password");
+        regConfirmPasswordField = createStyledPasswordField("Konfirmasi Password");
         
         // Role selection
         Label roleLabel = new Label("Peran:");
@@ -189,7 +213,7 @@ public class LoginView {
         roleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         
         ToggleGroup roleGroup = new ToggleGroup();
-        RadioButton studentRadio = new RadioButton("Pelajar");
+        studentRadio = new RadioButton("Pelajar");
         RadioButton teacherRadio = new RadioButton("Pengajar");
         
         studentRadio.setToggleGroup(roleGroup);
@@ -204,28 +228,10 @@ public class LoginView {
         roleContainer.getChildren().addAll(studentRadio, teacherRadio);
         
         // Register button
-        Button registerButton = createStyledButton("DAFTAR", Color.web("#66BB6A"));
-        
-        // Add to database
-        registerButton.setOnAction(e -> {
-            // Validasi login (dummy)
-            String username = usernameField.getText();
-            String password = passwordField.getText();
-            String email = emailField.getText();
-            String fullName = fullNameField.getText();
-            
-            RadioButton selectedRole = (RadioButton) roleGroup.getSelectedToggle();
-            String role = selectedRole.getText();
+        registerButton = createStyledButton("DAFTAR", Color.web("#66BB6A"));
 
-            User user = new User(username, password, fullName, email, role);
-
-            if (userDAO.register(user) != false) {
-                switchToLogin();
-            }
-        });
-
-        registerForm.getChildren().addAll(formTitle, fullNameField, usernameField, 
-                                         emailField, passwordField, confirmPasswordField,
+        registerForm.getChildren().addAll(formTitle, regFullNameField, regUsernameField, 
+                                         regEmailField, regPasswordField, regConfirmPasswordField,
                                          roleLabel, roleContainer, registerButton);
 
         
@@ -263,6 +269,40 @@ public class LoginView {
         });
         
         return textField;
+    }
+
+    // Untuk login
+    public String getLoginUsername() {
+        return loginUsernameField.getText();
+    }
+
+    public String getLoginPassword() {
+        return loginPasswordField.getText();
+    }
+
+    // Untuk registrasi
+    public String getRegisterFullName() {
+        return regFullNameField.getText();
+    }
+
+    public String getRegisterUsername() {
+        return regUsernameField.getText();
+    }
+
+    public String getRegisterEmail() {
+        return regEmailField.getText();
+    }
+
+    public String getRegisterPassword() {
+        return regPasswordField.getText();
+    }
+
+    public String getRegisterConfirmPassword() {
+        return regConfirmPasswordField.getText();
+    }
+
+    public String getRegisterRole() {
+        return studentRadio.isSelected() ? "student" : "teacher";
     }
     
     private PasswordField createStyledPasswordField(String placeholder) {
@@ -383,7 +423,7 @@ public class LoginView {
         return toggleContainer;
     }
     
-    private void switchToLogin() {
+    public void switchToLogin() {
         isLoginMode = true;
         
         FadeTransition fadeOut = new FadeTransition(Duration.millis(200), registerForm);

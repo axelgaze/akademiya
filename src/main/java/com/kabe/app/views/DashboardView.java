@@ -55,9 +55,15 @@ public class DashboardView {
         
         // Create main content
         createMainContent();
+
+        ScrollPane scrollPane = new ScrollPane(mainContent);
+        scrollPane.setFitToWidth(true); // Konten menyesuaikan lebar
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // Nonaktifkan scroll horizontal
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Aktifkan scroll vertikal jika diperlukan
+        scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;"); // Hilangkan latar belakang
         
         root.setLeft(sidebar);
-        root.setCenter(mainContent);
+        root.setCenter(scrollPane);
         
         scene = new Scene(root, 1200, 800);
         stage.setTitle("Akademiya - Dashboard");
@@ -131,6 +137,13 @@ public class DashboardView {
                 navigationHandler.handleNavigation("Kalender");
             }
         });
+
+        profileBtn.setOnAction(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("Profile");
+            }
+        });
+        
         
         // User info at bottom
         VBox userInfo = new VBox(10);
@@ -154,6 +167,12 @@ public class DashboardView {
                           "-fx-background-radius: 8; " +
                           "-fx-text-fill: white; " +
                           "-fx-cursor: hand;");
+
+        logoutBtn.setOnAction(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("Logout");
+            }
+        });
         
         userInfo.getChildren().addAll(userAvatar, userName, userRole, logoutBtn);
         

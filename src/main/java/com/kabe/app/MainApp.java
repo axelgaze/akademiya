@@ -1,5 +1,6 @@
 package com.kabe.app;
 
+import com.kabe.app.controllers.LoginController;
 import com.kabe.app.views.*;
 
 import javafx.application.Application;
@@ -12,6 +13,8 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle("Akademiya");
+        primaryStage.setMinWidth(1200);
+        primaryStage.setMinHeight(800);
         
         // Mulai dengan tampilan login
         showLoginView();
@@ -19,6 +22,7 @@ public class MainApp extends Application {
     
     public void showLoginView() {
         LoginView loginView = new LoginView(primaryStage);
+        new LoginController(loginView); // Hubungkan view dengan controller
         loginView.show();
         
         // Set handler untuk login berhasil (contoh sederhana)
@@ -26,6 +30,7 @@ public class MainApp extends Application {
         loginView.setOnLoginSuccess(() -> {
             showDashboardView();
         });
+
     }
     
     public void showDashboardView() {
@@ -44,10 +49,12 @@ public class MainApp extends Application {
                 case "Kalender":
                     showCalendarView();
                     break;
+                case "Profile":
+                    showProfileView();
+                    break;
                 case "Logout":
                     showLoginView();
                     break;
-                // Dashboard tidak perlu di-handle karena sudah di dashboard
             }
         });
     }
@@ -66,6 +73,9 @@ public class MainApp extends Application {
                     break;
                 case "Kalender":
                     showCalendarView();
+                    break;
+                case "Profile":
+                    showProfileView();
                     break;
                 case "Logout":
                     showLoginView();
@@ -89,6 +99,9 @@ public class MainApp extends Application {
                 case "Kalender":
                     showCalendarView();
                     break;
+                case "Profile":
+                    showProfileView();
+                    break;
                 case "Logout":
                     showLoginView();
                     break;
@@ -110,6 +123,34 @@ public class MainApp extends Application {
                     break;
                 case "Kelas":
                     showKelasView();
+                    break;
+                case "Profile":
+                    showProfileView();
+                    break;
+                case "Logout":
+                    showLoginView();
+                    break;
+            }
+        });
+    }
+
+    public void showProfileView() {
+        ProfileView profileView = new ProfileView(primaryStage);
+        profileView.show();
+        
+        profileView.setNavigationHandler(viewName -> {
+            switch(viewName) {
+                case "Dashboard":
+                    showDashboardView();
+                    break;
+                case "Tugas":
+                    showTasksView();
+                    break;
+                case "Kelas":
+                    showKelasView();
+                    break;
+                case "Kalender":
+                    showCalendarView();
                     break;
                 case "Logout":
                     showLoginView();
