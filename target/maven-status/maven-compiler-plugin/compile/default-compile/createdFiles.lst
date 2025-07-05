@@ -1,0 +1,12 @@
+com\kabe\app\view\KelasView$KelasData.class
+com\kabe\app\view\CalendarView.class
+com\kabe\app\view\TasksView.class
+com\kabe\app\view\CalendarView$NavigationHandler.class
+com\kabe\app\view\KelasView$NavigationHandler.class
+com\kabe\app\view\LoginView.class
+com\kabe\app\view\KelasView.class
+com\kabe\app\view\DashboardView$NavigationHandler.class
+com\kabe\app\MainApp.class
+com\kabe\app\view\CalendarView$TaskInfo.class
+com\kabe\app\view\DashboardView.class
+com\kabe\app\view\TasksView$NavigationHandler.class
