@@ -302,8 +302,7 @@ public class KelasDAO {
                 PemberitahuanKelas pemberitahuanKelas = new PemberitahuanKelas();
                 pemberitahuanKelas.setIdKelas(rs.getInt("kelasId"));
                 pemberitahuanKelas.setIsi(rs.getString("isi"));
-                System.out.println(pemberitahuanKelas.getIsi());
-                System.out.println(rs.getString("isi"));
+                pemberitahuanKelas.setId(rs.getInt("id"));
                 pemberitahuanKelas.setCreatedTime(rs.getTimestamp("created_time").toLocalDateTime());
                 pemberitahuanList.add(pemberitahuanKelas);
 
@@ -312,5 +311,19 @@ public class KelasDAO {
             System.err.println("Error getting pemberitahuan by classes: " + e.getMessage());
         }
         return pemberitahuanList;
+    }
+
+    public boolean deletePemberitahuan(int idpemberitahuan) {
+        String sql = "DELETE FROM pemberitahuankelas WHERE id = ?";
+
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, idpemberitahuan);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error removing pemberitahuan from class: " + e.getMessage());
+            return false;
+        }
     }
 }

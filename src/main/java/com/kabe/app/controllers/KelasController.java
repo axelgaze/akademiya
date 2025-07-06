@@ -75,4 +75,8 @@ public class KelasController {
     public List<PemberitahuanKelas> getPemberitahuanKelas(int kelasId) {
         return kelasDAO.getPemberitahuanByKelas(kelasId);
     }
+
+    public boolean deletePemberitahuan(int pemberitahuanId) {
+        return kelasDAO.deletePemberitahuan(pemberitahuanId);
+    }
 }

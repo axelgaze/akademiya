@@ -20,6 +20,9 @@ public class PemberitahuanKelas {
         return idKelas;
     }
 
+    public int getId() {
+        return id;
+    }
 
     public String getIsi() {
         return isi;
@@ -35,6 +38,10 @@ public class PemberitahuanKelas {
 
     public void setCreatedTime(LocalDateTime createdTime) {
         this.createdTime = createdTime;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public void setIsi(String isi) {

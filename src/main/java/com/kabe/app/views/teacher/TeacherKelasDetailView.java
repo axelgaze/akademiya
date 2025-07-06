@@ -424,50 +424,72 @@ public class TeacherKelasDetailView implements ViewInterface {
         headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         headerLabel.setTextFill(Color.web("#4A148C"));
         
-        Button addNotifBtn = new Button("+ Buat Pemberitahuan");
-        addNotifBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        addNotifBtn.setStyle("-fx-background-color: #673AB7; " +
-                           "-fx-background-radius: 6; " +
-                           "-fx-text-fill: white; " +
-                           "-fx-cursor: hand; " +
-                           "-fx-padding: 8 15 8 15;");
+        // Create a text field and button for adding notifications inline
+        TextField newNotifField = new TextField();
+        newNotifField.setPromptText("Tulis pemberitahuan baru...");
+        newNotifField.setStyle("-fx-background-radius: 8; -fx-padding: 8;");
+        HBox.setHgrow(newNotifField, Priority.ALWAYS);
         
-        header.getChildren().addAll(headerLabel, addNotifBtn);
-        HBox.setHgrow(headerLabel, Priority.ALWAYS);
+        Button submitNotifBtn = new Button("Tambah");
+        submitNotifBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        submitNotifBtn.setStyle("-fx-background-color: #673AB7; " +
+                            "-fx-background-radius: 6; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-cursor: hand; " +
+                            "-fx-padding: 8 15 8 15;");
         
-        // Sample notifications
+        HBox addNotifBox = new HBox(10);
+        addNotifBox.getChildren().addAll(newNotifField, submitNotifBtn);
+        addNotifBox.setAlignment(Pos.CENTER_LEFT);
+        
+        // Notification list
         ScrollPane notifScroll = new ScrollPane();
         notifScroll.setFitToWidth(true);
         notifScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         notifScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         notifScroll.setStyle("-fx-background-color: transparent; " +
-                           "-fx-background: transparent;");
+                        "-fx-background: transparent;");
         
         VBox notificationsList = new VBox(10);
+        refreshPemberitahuanList(notificationsList);
         
-        List<PemberitahuanKelas> pemberitahuanList = kelasController.getPemberitahuanKelas(kelasData.getId());
-        for (PemberitahuanKelas pemberitahuan : pemberitahuanList) {
-            String isiPemberitahuan = pemberitahuan.getIsi();
-            String waktuPemberitahuan = formatTimeAgo(pemberitahuan.getCreatedTime());
-            HBox notif = createNotificationItem("📢", isiPemberitahuan, waktuPemberitahuan);
-            notificationsList.getChildren().add(notif);
-        }
-
+        // Add action for submit button
+        submitNotifBtn.setOnAction(e -> {
+            String isi = newNotifField.getText().trim();
+            if (!isi.isEmpty()) {
+                kelasController.addPemberitahuan(kelasData.getId(), isi);
+                newNotifField.clear();
+                refreshPemberitahuanList(notificationsList);
+            }
+        });
+        
         notifScroll.setContent(notificationsList);
         
-        content.getChildren().addAll(header, notifScroll);
+        content.getChildren().addAll(header, addNotifBox, notifScroll);
         VBox.setVgrow(notifScroll, Priority.ALWAYS);
         
         return content;
     }
 
-    private HBox createNotificationItem(String icon, String message, String time) {
+    private void refreshPemberitahuanList(VBox container) {
+        container.getChildren().clear();
+        
+        List<PemberitahuanKelas> pemberitahuanList = kelasController.getPemberitahuanKelas(kelasData.getId());
+        for (PemberitahuanKelas pemberitahuan : pemberitahuanList) {
+            String isiPemberitahuan = pemberitahuan.getIsi();
+            String waktuPemberitahuan = formatTimeAgo(pemberitahuan.getCreatedTime());
+            HBox notif = createNotificationItem("📢", isiPemberitahuan, waktuPemberitahuan, pemberitahuan.getId());
+            container.getChildren().add(notif);
+        }
+    }
+
+    private HBox createNotificationItem(String icon, String message, String time, int pemberitahuanId) {
         HBox item = new HBox(15);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
         item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.02); " +
-                     "-fx-background-radius: 8; " +
-                     "-fx-cursor: hand;");
+                    "-fx-background-radius: 8; " +
+                    "-fx-cursor: hand;");
         
         // Icon container
         VBox iconContainer = new VBox();
@@ -475,7 +497,7 @@ public class TeacherKelasDetailView implements ViewInterface {
         iconContainer.setPrefWidth(35);
         iconContainer.setPrefHeight(35);
         iconContainer.setStyle("-fx-background-color: rgba(103, 58, 183, 0.1); " +
-                              "-fx-background-radius: 17;");
+                            "-fx-background-radius: 17;");
         
         Label iconLabel = new Label(icon);
         iconLabel.setFont(Font.font(16));
@@ -495,31 +517,42 @@ public class TeacherKelasDetailView implements ViewInterface {
         
         infoBox.getChildren().addAll(messageLabel, timeLabel);
         
-        // Options button with more actions for teacher
-        MenuButton optionsBtn = new MenuButton("⋮");
-        optionsBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        optionsBtn.setStyle("-fx-background-color: transparent; " +
-                          "-fx-text-fill: #888888; " +
-                          "-fx-cursor: hand;");
+        // Delete button only
+        Button deleteBtn = new Button("Hapus");
+        deleteBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        deleteBtn.setStyle("-fx-background-color: transparent; " +
+                        "-fx-text-fill: #D32F2F; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 5;");
         
-        MenuItem editItem = new MenuItem("Edit");
-        MenuItem deleteItem = new MenuItem("Hapus");
-        optionsBtn.getItems().addAll(editItem, deleteItem);
+        deleteBtn.setOnAction(e -> {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Konfirmasi Hapus");
+            confirm.setHeaderText("Hapus Pemberitahuan");
+            confirm.setContentText("Apakah Anda yakin ingin menghapus pemberitahuan ini?");
+            
+            confirm.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    kelasController.deletePemberitahuan(pemberitahuanId);
+                    refreshPemberitahuanList((VBox) item.getParent());
+                }
+            });
+        });
         
-        item.getChildren().addAll(iconContainer, infoBox, optionsBtn);
+        item.getChildren().addAll(iconContainer, infoBox, deleteBtn);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
         
         // Hover effect
         item.setOnMouseEntered(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.05); " +
-                         "-fx-background-radius: 8; " +
-                         "-fx-cursor: hand;");
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand;");
         });
         
         item.setOnMouseExited(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.02); " +
-                         "-fx-background-radius: 8; " +
-                         "-fx-cursor: hand;");
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand;");
         });
         
         return item;
