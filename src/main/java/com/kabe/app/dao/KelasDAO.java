@@ -1,6 +1,7 @@
 package com.kabe.app.dao;
 
 import com.kabe.app.models.Kelas;
+import com.kabe.app.models.PemberitahuanKelas;
 import com.kabe.app.models.User;
 import com.kabe.app.utils.DatabaseConnector;
 import java.sql.Connection;
@@ -8,6 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -269,5 +271,46 @@ public class KelasDAO {
             System.err.println("Error deleting class: " + e.getMessage());
             return false;
         }
+    }
+
+    public boolean addPemberitahuan(int kelasId, String isi) {
+        String sql = "INSERT INTO pemberitahuankelas (kelasId, isi) VALUES (?, ?)";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, kelasId);
+            pstmt.setString(2, isi);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error adding pemberitahuan kelas: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<PemberitahuanKelas> getPemberitahuanByKelas(int kelasId) {
+        List<PemberitahuanKelas> pemberitahuanList = new ArrayList<>();
+        String sql = "SELECT * FROM pemberitahuankelas WHERE kelasId = ?";
+
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, kelasId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                PemberitahuanKelas pemberitahuanKelas = new PemberitahuanKelas();
+                pemberitahuanKelas.setIdKelas(rs.getInt("kelasId"));
+                pemberitahuanKelas.setIsi(rs.getString("isi"));
+                System.out.println(pemberitahuanKelas.getIsi());
+                System.out.println(rs.getString("isi"));
+                pemberitahuanKelas.setCreatedTime(rs.getTimestamp("created_time").toLocalDateTime());
+                pemberitahuanList.add(pemberitahuanKelas);
+
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting pemberitahuan by classes: " + e.getMessage());
+        }
+        return pemberitahuanList;
     }
 }

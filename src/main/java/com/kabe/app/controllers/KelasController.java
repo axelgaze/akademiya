@@ -2,6 +2,7 @@ package com.kabe.app.controllers;
 
 import com.kabe.app.dao.KelasDAO;
 import com.kabe.app.models.Kelas;
+import com.kabe.app.models.PemberitahuanKelas;
 import com.kabe.app.models.User;
 import java.util.List;
 
@@ -65,5 +66,13 @@ public class KelasController {
 
     public boolean deleteClass(int kelasId) {
         return kelasDAO.deleteClass(kelasId);
+    }
+
+    public boolean addPemberitahuan(int kelasId, String isi) {
+        return kelasDAO.addPemberitahuan(kelasId, isi);
+    }
+
+    public List<PemberitahuanKelas> getPemberitahuanKelas(int kelasId) {
+        return kelasDAO.getPemberitahuanByKelas(kelasId);
     }
 }

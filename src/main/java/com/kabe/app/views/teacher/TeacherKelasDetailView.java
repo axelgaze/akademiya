@@ -4,6 +4,7 @@ import com.kabe.app.controllers.KelasController;
 import com.kabe.app.models.Kelas;
 import com.kabe.app.models.User;
 import com.kabe.app.views.interfaces.ViewInterface;
+import com.kabe.app.models.PemberitahuanKelas;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,6 +18,11 @@ import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+
+import java.time.Duration;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class TeacherKelasDetailView implements ViewInterface {
     private Stage stage;
@@ -439,12 +445,14 @@ public class TeacherKelasDetailView implements ViewInterface {
         
         VBox notificationsList = new VBox(10);
         
-        HBox notif1 = createNotificationItem("📢", "Kelas besok dipindah ke ruang 205", "1 jam yang lalu");
-        HBox notif2 = createNotificationItem("⚠️", "Ujian tengah semester akan dilaksanakan minggu depan", "3 jam yang lalu");
-        HBox notif3 = createNotificationItem("📚", "Materi baru telah diupload ke sistem", "1 hari yang lalu");
-        HBox notif4 = createNotificationItem("🎯", "Deadline tugas kelompok diperpanjang hingga Jumat", "2 hari yang lalu");
-        
-        notificationsList.getChildren().addAll(notif1, notif2, notif3, notif4);
+        List<PemberitahuanKelas> pemberitahuanList = kelasController.getPemberitahuanKelas(kelasData.getId());
+        for (PemberitahuanKelas pemberitahuan : pemberitahuanList) {
+            String isiPemberitahuan = pemberitahuan.getIsi();
+            String waktuPemberitahuan = formatTimeAgo(pemberitahuan.getCreatedTime());
+            HBox notif = createNotificationItem("📢", isiPemberitahuan, waktuPemberitahuan);
+            notificationsList.getChildren().add(notif);
+        }
+
         notifScroll.setContent(notificationsList);
         
         content.getChildren().addAll(header, notifScroll);
@@ -515,6 +523,23 @@ public class TeacherKelasDetailView implements ViewInterface {
         });
         
         return item;
+    }
+
+    public static String formatTimeAgo(LocalDateTime waktu) {
+        LocalDateTime sekarang = LocalDateTime.now();
+        Duration durasi = Duration.between(waktu, sekarang);
+
+        long hari = durasi.toDays();
+        long jam = durasi.toHours();
+        long menit = durasi.toMinutes();
+
+        if (hari > 1) {
+            return hari + " hari yang lalu";
+        } else if (jam > 1) {
+            return jam + " jam yang lalu";
+        } else {
+            return menit + " menit yang lalu";
+        }
     }
 
     public void show() {

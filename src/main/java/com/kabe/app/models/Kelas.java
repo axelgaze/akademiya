@@ -3,6 +3,7 @@ package com.kabe.app.models;
 import java.util.List;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import com.kabe.app.models.PemberitahuanKelas;
 
 public class Kelas {
         private int id;
@@ -14,6 +15,7 @@ public class Kelas {
         private String namaPengajar;
         private List<User> daftarSiswa;
         private LocalDateTime created_time;
+        private List<PemberitahuanKelas> pemberitahuanKelas;
 
         public Kelas() {
 
@@ -24,6 +26,8 @@ public class Kelas {
             this.kode = kode;
             this.deskripsi = deskripsi;
             this.created_time = created_time;
+            this.daftarSiswa = new ArrayList<>();
+            this.pemberitahuanKelas = new ArrayList<>();
             this.jumlahSiswa = 0;
         }
         
@@ -36,6 +40,7 @@ public class Kelas {
         public int getPengajarId() {return pengajarId; }
         public List<User> getDaftarSiswa() { return daftarSiswa; }
         public String getNamaPengajar() { return namaPengajar; }
+        public List<PemberitahuanKelas> getPemberitahuanKelas() {return pemberitahuanKelas;}
         
         // Setters
         public void setId(int id) { this.id = id; }
@@ -46,4 +51,5 @@ public class Kelas {
         public void setPengajarId(int pengajarId) { this.pengajarId = pengajarId; }
         public void setDaftarSiswa(List<User> daftarSiswa) { this.daftarSiswa = daftarSiswa; }
         public void setNamaPengajar(String namaPengajar) { this.namaPengajar = namaPengajar; }
+        public void setPemberitahuanKelas(List<PemberitahuanKelas> pemberitahuanKelas) { this.pemberitahuanKelas = pemberitahuanKelas;}
     }

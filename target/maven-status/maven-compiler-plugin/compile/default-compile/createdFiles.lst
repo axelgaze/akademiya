@@ -21,6 +21,7 @@ com\kabe\app\views\student\StudentTasksView.class
 com\kabe\app\views\student\CalendarView.class
 com\kabe\app\views\student\ProfileView$NavigationHandler.class
 com\kabe\app\MainApp.class
+com\kabe\app\models\PemberitahuanKelas.class
 com\kabe\app\controllers\UserController.class
 com\kabe\app\models\User.class
 com\kabe\app\views\teacher\TeacherKelasDetailView.class
