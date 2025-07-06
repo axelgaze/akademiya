@@ -6,11 +6,14 @@ com\kabe\app\views\student\StudentKelasDetailView.class
 com\kabe\app\views\teacher\TeacherKelasView.class
 com\kabe\app\dao\UserDAO.class
 com\kabe\app\models\LampiranSiswa.class
+com\kabe\app\dao\KelasDAO.class
 com\kabe\app\views\teacher\TeacherTaskDetailView.class
+com\kabe\app\controllers\KelasController.class
 com\kabe\app\controllers\NavigationController.class
 com\kabe\app\views\student\StudentTaskDetailView.class
 com\kabe\app\views\teacher\TeacherDashboardView.class
 com\kabe\app\views\interfaces\KelasInterface.class
+com\kabe\app\views\teacher\BuatKelasView.class
 com\kabe\app\utils\DatabaseConnector.class
 com\kabe\app\views\interfaces\ViewInterface.class
 com\kabe\app\views\student\CalendarView$NavigationHandler.class

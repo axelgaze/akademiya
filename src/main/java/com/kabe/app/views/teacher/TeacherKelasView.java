@@ -14,10 +14,14 @@ import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import java.util.List;
+import java.util.ArrayList;
 
+import com.kabe.app.controllers.KelasController;
 import com.kabe.app.controllers.UserController;
 import com.kabe.app.views.interfaces.KelasInterface;
 import com.kabe.app.models.Kelas;
+import com.kabe.app.models.*;
 
 public class TeacherKelasView implements KelasInterface {
     private Stage stage;
@@ -31,6 +35,7 @@ public class TeacherKelasView implements KelasInterface {
     private NavigationHandler navigationHandler;
     private Kelas selectedKelas;
     private UserController userController;
+    private KelasController kelasController;
 
     public Kelas getSelectedKelas() {
         return selectedKelas;
@@ -50,6 +55,7 @@ public class TeacherKelasView implements KelasInterface {
     public TeacherKelasView(Stage stage, UserController userController) {
         this.stage = stage;
         this.userController = userController;
+        kelasController = new KelasController();
         initializeSampleData();
         initializeView();
     }
@@ -58,13 +64,31 @@ public class TeacherKelasView implements KelasInterface {
         // For teacher view, show classes they teach
         String teacherName = userController.getUser().getFullName();
         kelasList.addAll(
-            new Kelas("Matematika Lanjutan", teacherName, "MAT-301", 25, 
-                         "Kelas matematika untuk siswa tingkat lanjut dengan fokus pada kalkulus dan statistik.", 
-                         new String[]{"John Doe", "Jane Smith", "Michael Johnson", "Emily Davis", "Robert Brown"}),
-            new Kelas("Fisika Quantum", teacherName, "FIS-201", 20,
-                         "Memahami konsep dasar fisika quantum dan aplikasinya dalam teknologi modern.",
-                         new String[]{"Alice Wilson", "Bob Taylor", "Charlie Anderson", "Diana Martinez", "Edward Clark"})
+            kelasController.getClassesByTeacher(userController.getUser().getId())
         );
+
+        for (Kelas kelas : kelasList) {
+            kelas.setJumlahSiswa(kelasController.getStudentCount(userController.getUser().getId()));
+        }
+
+        for (Kelas kelas : kelasList) {
+            kelasController.assignTeacherToClass(kelas.getId(), userController.getUser().getId());
+            kelas.setNamaPengajar(kelasController.getClassTeacher(kelas.getId()).getFullName());
+        }
+        
+        for (Kelas kelas : kelasList) {
+            List<User> daftarSiswaDatabase = kelasController.getStudentsByClass(kelas.getId());
+            List<User> daftarSiswa = new ArrayList<>();
+            for (User siswa : daftarSiswaDatabase) {
+                daftarSiswa.add(siswa);
+            }
+
+            kelas.setDaftarSiswa(daftarSiswa);
+        }
+
+        for (Kelas kelas : kelasList) {
+            kelas.setJumlahSiswa(kelasController.getStudentCount(kelas.getId())+1);
+        }
     }
     
     private void initializeView() {
@@ -420,7 +444,7 @@ public class TeacherKelasView implements KelasInterface {
         nameLabel.setWrapText(true);
         
         // Students count
-        Label studentsLabel = new Label("👥 " + kelas.getJumlahSiswa() + " siswa");
+        Label studentsLabel = new Label("👥 " + kelasController.getStudentCount(kelas.getId()) + " siswa");
         studentsLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         studentsLabel.setTextFill(Color.web("#888888"));
         
@@ -454,6 +478,14 @@ public class TeacherKelasView implements KelasInterface {
         });
         
         return card;
+    }
+
+    public int getSelectedKelasStudentCount(Kelas kelas) {
+        return kelas.getJumlahSiswa();
+    }
+
+    public KelasController getKelasController() {
+        return kelasController;
     }
     
     public void show() {

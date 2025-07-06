@@ -1,39 +1,49 @@
 package com.kabe.app.models;
 
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class Kelas {
+        private int id;
         private String nama;
-        private String pengajar;
         private String kode;
-        private int jumlahSiswa;
         private String deskripsi;
-        private String[] anggota;
-        
-        public Kelas(String nama, String pengajar, String kode, int jumlahSiswa, 
-                        String deskripsi, String[] anggota) {
+        private int jumlahSiswa;
+        private int pengajarId;
+        private String namaPengajar;
+        private List<User> daftarSiswa;
+        private LocalDateTime created_time;
+
+        public Kelas() {
+
+        }
+    
+        public Kelas(int id, String nama, String kode, String deskripsi, LocalDateTime created_time) {
             this.nama = nama;
-            this.pengajar = pengajar;
             this.kode = kode;
-            this.jumlahSiswa = jumlahSiswa;
             this.deskripsi = deskripsi;
-            this.anggota = anggota;
+            this.created_time = created_time;
+            this.jumlahSiswa = 0;
         }
         
         // Getters
+        public int getId() { return id; }
         public String getNama() { return nama; }
-        public String getPengajar() { return pengajar; }
         public String getKode() { return kode; }
-        public int getJumlahSiswa() { return jumlahSiswa; }
         public String getDeskripsi() { return deskripsi; }
-        public String[] getAnggota() { return anggota; }
+        public int getJumlahSiswa() { return jumlahSiswa; }
+        public int getPengajarId() {return pengajarId; }
+        public List<User> getDaftarSiswa() { return daftarSiswa; }
+        public String getNamaPengajar() { return namaPengajar; }
         
         // Setters
+        public void setId(int id) { this.id = id; }
         public void setNama(String nama) { this.nama = nama; }
-        public void setPengajar(String pengajar) { this.pengajar = pengajar; }
         public void setKode(String kode) { this.kode = kode; }
-        public void setJumlahSiswa(int jumlahSiswa) { this.jumlahSiswa = jumlahSiswa; }
         public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }
-        public void setAnggota(String[] anggota) { this.anggota = anggota; }
+        public void setJumlahSiswa(int jumlahSiswa) { this.jumlahSiswa = jumlahSiswa; }
+        public void setPengajarId(int pengajarId) { this.pengajarId = pengajarId; }
+        public void setDaftarSiswa(List<User> daftarSiswa) { this.daftarSiswa = daftarSiswa; }
+        public void setNamaPengajar(String namaPengajar) { this.namaPengajar = namaPengajar; }
     }

@@ -1,4 +1,5 @@
 package com.kabe.app.views.interfaces;
+import com.kabe.app.controllers.KelasController;
 import com.kabe.app.models.Kelas;
 
 public interface KelasInterface {
@@ -10,4 +11,5 @@ public interface KelasInterface {
     void show();
 
     Kelas getSelectedKelas();
+    KelasController getKelasController();
 }

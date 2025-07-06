@@ -18,9 +18,11 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import com.kabe.app.controllers.KelasController;
 import com.kabe.app.controllers.UserController;
 import com.kabe.app.views.interfaces.KelasInterface;
 import com.kabe.app.models.Kelas;
+import com.kabe.app.models.User;
 
 public class StudentKelasView implements KelasInterface {
     private Stage stage;
@@ -34,6 +36,7 @@ public class StudentKelasView implements KelasInterface {
     private NavigationHandler navigationHandler;
     private Kelas selectedKelas;
     private UserController userController;
+    private KelasController kelasController;
 
     public Kelas getSelectedKelas() {
         return selectedKelas;
@@ -53,30 +56,14 @@ public class StudentKelasView implements KelasInterface {
     public StudentKelasView(Stage stage, UserController userController) {
         this.stage = stage;
         this.userController = userController;
+        this.kelasController = new KelasController();
         initializeSampleData();
         initializeView();
     }
     
     private void initializeSampleData() {
         kelasList.addAll(
-            new Kelas("Matematika Lanjutan", "Bu Sarah Wijaya", "MAT-301", 25, 
-                         "Kelas matematika untuk siswa tingkat lanjut dengan fokus pada kalkulus dan statistik.", 
-                         new String[]{"John Doe", "Jane Smith", "Michael Johnson", "Emily Davis", "Robert Brown"}),
-            new Kelas("Fisika Quantum", "Pak Ahmad Rizki", "FIS-201", 20,
-                         "Memahami konsep dasar fisika quantum dan aplikasinya dalam teknologi modern.",
-                         new String[]{"Alice Wilson", "Bob Taylor", "Charlie Anderson", "Diana Martinez", "Edward Clark"}),
-            new Kelas("Kimia Organik", "Dr. Lisa Chen", "KIM-401", 18,
-                         "Studi mendalam tentang senyawa organik dan reaksi-reaksinya.",
-                         new String[]{"Frank Lewis", "Grace Walker", "Henry Hall", "Ivy Young", "Jack King"}),
-            new Kelas("Biologi Molekuler", "Prof. David Kumar", "BIO-501", 22,
-                         "Eksplorasi struktur dan fungsi molekul dalam sistem biologis.",
-                         new String[]{"Karen Wright", "Leo Lopez", "Mia Hill", "Noah Green", "Olivia Adams"}),
-            new Kelas("Bahasa Indonesia", "Ibu Siti Nurhaliza", "BHS-101", 30,
-                         "Pembelajaran bahasa Indonesia yang mencakup sastra dan tata bahasa.",
-                         new String[]{"Paul Baker", "Quinn Rivera", "Ruby Campbell", "Sam Mitchell", "Tina Cooper"}),
-            new Kelas("Sejarah Dunia", "Pak Bambang Sutrisno", "SEJ-201", 28,
-                         "Memahami peristiwa-peristiwa penting dalam sejarah dunia.",
-                         new String[]{"Uma Patel", "Victor Ross", "Wendy Morgan", "Xavier Bell", "Yara Foster"})
+            kelasController.getClassesByTeacher(userController.getUser().getId())
         );
     }
     
@@ -390,7 +377,7 @@ public class StudentKelasView implements KelasInterface {
         int maxColumns = 3;
         
         for (Kelas kelas : kelasList) {
-            VBox kelasCard = createKelasCard(kelas);
+            VBox kelasCard = createKelasCard(kelasController.getKelasById(kelas.getId()));
             kelasGrid.add(kelasCard, column, row);
             
             column++;
@@ -436,7 +423,7 @@ public class StudentKelasView implements KelasInterface {
         nameLabel.setWrapText(true);
         
         // Pengajar
-        Label pengajarLabel = new Label("👨‍🏫 " + kelas.getPengajar());
+        Label pengajarLabel = new Label("👨‍🏫 " + kelas.getNamaPengajar());
         pengajarLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
         pengajarLabel.setTextFill(Color.web("#666666"));
         
@@ -512,7 +499,7 @@ public class StudentKelasView implements KelasInterface {
         modalTitle.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         modalTitle.setTextFill(Color.web("#2D5016"));
         
-        Label modalSubtitle = new Label(kelas.getKode() + " • " + kelas.getPengajar());
+        Label modalSubtitle = new Label(kelas.getKode() + " • " + kelas.getNamaPengajar());
         modalSubtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
         modalSubtitle.setTextFill(Color.web("#4A7C26"));
         
@@ -606,12 +593,12 @@ public class StudentKelasView implements KelasInterface {
         VBox membersList = new VBox(10);
         
         // Add teacher
-        HBox teacherItem = createMemberItem("👨‍🏫", kelas.getPengajar(), "Pengajar", Color.web("#4A7C26"));
+        HBox teacherItem = createMemberItem("👨‍🏫", kelas.getNamaPengajar(), "Pengajar", Color.web("#4A7C26"));
         membersList.getChildren().add(teacherItem);
         
         // Add students
-        for (String student : kelas.getAnggota()) {
-            HBox studentItem = createMemberItem("👨‍🎓", student, "Pelajar", Color.web("#2196F3"));
+        for (User student : kelas.getDaftarSiswa()) {
+            HBox studentItem = createMemberItem("👨‍🎓", student.getFullName(), "Pelajar", Color.web("#2196F3"));
             membersList.getChildren().add(studentItem);
         }
         
@@ -801,6 +788,10 @@ public class StudentKelasView implements KelasInterface {
         });
         
         return item;
+    }
+
+    public KelasController getKelasController() {
+        return kelasController;
     }
     
     public void show() {

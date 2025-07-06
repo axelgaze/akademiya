@@ -1,6 +1,8 @@
 package com.kabe.app.views.teacher;
 
+import com.kabe.app.controllers.KelasController;
 import com.kabe.app.models.Kelas;
+import com.kabe.app.models.User;
 import com.kabe.app.views.interfaces.ViewInterface;
 
 import javafx.geometry.Insets;
@@ -23,14 +25,16 @@ public class TeacherKelasDetailView implements ViewInterface {
     private VBox mainContent;
     private Kelas kelasData;
     private NavigationHandler navigationHandler;
+    private KelasController kelasController;
 
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
 
-    public TeacherKelasDetailView(Stage stage, Kelas kelasData) {
+    public TeacherKelasDetailView(Stage stage, Kelas kelasData, KelasController kelasController) {
         this.stage = stage;
         this.kelasData = kelasData;
+        this.kelasController = kelasController;
         initializeView();
     }
 
@@ -153,7 +157,7 @@ public class TeacherKelasDetailView implements ViewInterface {
             
             alert.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
-                    // Handle disband logic here
+                    kelasController.deleteClass(kelasData.getId());
                     if (navigationHandler != null) {
                         navigationHandler.handleNavigation("Kelas");
                     }
@@ -239,12 +243,12 @@ public class TeacherKelasDetailView implements ViewInterface {
         VBox membersList = new VBox(10);
         
         // Add teacher
-        HBox teacherItem = createMemberItem("👨‍🏫", kelasData.getPengajar(), "Pengajar", Color.web("#673AB7"));
+        HBox teacherItem = createMemberItem("👨‍🏫", kelasData.getNamaPengajar(), "Pengajar", Color.web("#673AB7"));
         membersList.getChildren().add(teacherItem);
         
         // Add students
-        for (String student : kelasData.getAnggota()) {
-            HBox studentItem = createMemberItem("👨‍🎓", student, "Pelajar", Color.web("#2196F3"));
+        for (User student : kelasData.getDaftarSiswa()) {
+            HBox studentItem = createMemberItem("👨‍🎓", student.getFullName(), "Pelajar", Color.web("#2196F3"));
             membersList.getChildren().add(studentItem);
         }
         

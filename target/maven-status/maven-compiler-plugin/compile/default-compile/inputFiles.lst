@@ -1,5 +1,7 @@
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\KelasController.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\NavigationController.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\UserController.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\dao\KelasDAO.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\dao\UserDAO.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\MainApp.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\Kelas.java
@@ -20,6 +22,7 @@ C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentKelasView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentTaskDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentTasksView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\BuatKelasView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherDashboardView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherKelasDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherKelasView.java

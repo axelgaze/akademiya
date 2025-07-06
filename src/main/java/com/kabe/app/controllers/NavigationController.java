@@ -97,25 +97,37 @@ public class NavigationController {
         
         kelasView.setNavigationHandler(viewName -> {
             if ("KelasDetail".equals(viewName)) {
+                KelasController kelasController = kelasView.getKelasController();
                 Kelas selectedKelas = kelasView.getSelectedKelas();
-                showDetailKelasView(selectedKelas);
+                showDetailKelasView(selectedKelas, kelasController);
+            } else if ("CreateClass".equals(viewName)) {
+                KelasController kelasController = kelasView.getKelasController();
+                showBuatKelasView(kelasController, userController);
             } else {
                 navigate(viewName);
             }
         });
     }
     
-    public void showDetailKelasView(Kelas selectedKelas) {
+    public void showDetailKelasView(Kelas selectedKelas, KelasController kelasController) {
         ViewInterface kelasDetailView;
         if (userController.getUser().getRole().equals("siswa")) {
-            kelasDetailView = new StudentKelasDetailView(primaryStage, selectedKelas);
+            kelasDetailView = new StudentKelasDetailView(primaryStage, selectedKelas, kelasController);
         } else {
-            kelasDetailView = new TeacherKelasDetailView(primaryStage, selectedKelas);
+            kelasDetailView = new TeacherKelasDetailView(primaryStage, selectedKelas, kelasController);
         }
         
         kelasDetailView.show();
         
         kelasDetailView.setNavigationHandler(this::navigate);
+    }
+
+    public void showBuatKelasView(KelasController kelasController, UserController userController) {
+        BuatKelasView buatKelasView = new BuatKelasView(primaryStage, kelasController, userController);
+        buatKelasView.show();
+        kelasController = buatKelasView.getKelasController();
+        
+        buatKelasView.setNavigationHandler(this::navigate);
     }
     
     public void showCalendarView() {
