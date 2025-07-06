@@ -113,7 +113,7 @@ public class TeacherTasksView implements ViewInterface {
         Button calendarBtn = createMenuButton("📅 Kalender", false);
         Button profileBtn = createMenuButton("👤 Profile", false);
         
-        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn, profileBtn);
+        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn);
 
         dashboardBtn.setOnAction(e -> {
             if (navigationHandler != null) {
@@ -452,7 +452,7 @@ public class TeacherTasksView implements ViewInterface {
         // Click event
         item.setOnMouseClicked(e -> {
             if (navigationHandler != null) {
-                navigationHandler.handleNavigation("TeacherTaskDetail:" + title + ":" + className + ":" + deadline + ":" + status + ":" + isGroupTask + ":" + totalStudents + ":" + submitted);
+                navigationHandler.handleNavigation("TaskDetail:" + title + ":" + className + ":" + deadline + ":" + status + ":" + isGroupTask + ":" + totalStudents + ":" + submitted);
             }
         });
 

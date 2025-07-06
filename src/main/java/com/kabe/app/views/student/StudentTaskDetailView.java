@@ -17,7 +17,9 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.util.List;
 
-public class TaskDetailView {
+import com.kabe.app.views.interfaces.ViewInterface;
+
+public class StudentTaskDetailView implements ViewInterface{
     private Stage stage;
     private Scene scene;
     private VBox root;
@@ -31,15 +33,11 @@ public class TaskDetailView {
     private String status;
     private boolean isGroupTask;
 
-    public interface NavigationHandler {
-        void handleNavigation(String viewName);
-    }
-
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
     
-    public TaskDetailView(Stage stage, String title, String className, String teacher, 
+    public StudentTaskDetailView(Stage stage, String title, String className, String teacher, 
                          String deadline, String status, boolean isGroupTask) {
         this.stage = stage;
         this.title = title;

@@ -14,12 +14,14 @@ C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\interfaces\ViewInterface.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\LoginView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\CalendarView.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\KelasDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\ProfileView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentDashboardView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentKelasDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentKelasView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentTaskDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\StudentTasksView.java
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\student\TaskDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherDashboardView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherKelasDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherKelasView.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherTaskDetailView.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\teacher\TeacherTasksView.java

@@ -58,15 +58,29 @@ public class NavigationController {
     }
     
     public void showDetailTasksView(String viewNames) {
-        String[] params = viewNames.split(":");
-        String title = params[1];
-        String className = params[2];
-        String teacher = params[3];
-        String deadline = params[4];
-        String status = params[5];
-        boolean isGroupTask = Boolean.parseBoolean(params[6]);
-        
-        TaskDetailView taskDetailView = new TaskDetailView(primaryStage, title, className, teacher, deadline, status, isGroupTask);
+        ViewInterface taskDetailView;
+        if (userController.getUser().getRole().equals("siswa")) {
+            String[] params = viewNames.split(":");
+            String title = params[1];
+            String className = params[2];
+            String teacher = params[3];
+            String deadline = params[4];
+            String status = params[5];
+            boolean isGroupTask = Boolean.parseBoolean(params[6]);
+            
+            taskDetailView = new StudentTaskDetailView(primaryStage, title, className, teacher, deadline, status, isGroupTask);
+        } else {
+            String[] params = viewNames.split(":");
+            String title = params[1];
+            String className = params[2];
+            String deadline = params[3];
+            int totalStudents = Integer.valueOf(params[6]);
+            int submittedCount = Integer.valueOf(params[7]);
+            boolean isGroupTask = Boolean.parseBoolean(params[5]);
+
+            taskDetailView = new TeacherTaskDetailView(primaryStage, title, className, deadline, totalStudents, submittedCount);
+        }
+
         taskDetailView.show();
         
         taskDetailView.setNavigationHandler(this::navigate);
@@ -92,7 +106,13 @@ public class NavigationController {
     }
     
     public void showDetailKelasView(Kelas selectedKelas) {
-        KelasDetailView kelasDetailView = new KelasDetailView(primaryStage, selectedKelas);
+        ViewInterface kelasDetailView;
+        if (userController.getUser().getRole().equals("siswa")) {
+            kelasDetailView = new StudentKelasDetailView(primaryStage, selectedKelas);
+        } else {
+            kelasDetailView = new TeacherKelasDetailView(primaryStage, selectedKelas);
+        }
+        
         kelasDetailView.show();
         
         kelasDetailView.setNavigationHandler(this::navigate);

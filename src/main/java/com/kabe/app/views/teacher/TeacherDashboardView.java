@@ -111,7 +111,7 @@ public class TeacherDashboardView implements ViewInterface {
         Button calendarBtn = createMenuButton("📅 Kalender", false);
         Button profileBtn = createMenuButton("👤 Profile", false);
         
-        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn, profileBtn);
+        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn);
 
         dashboardBtn.setOnAction(e -> {
             if (navigationHandler != null) {

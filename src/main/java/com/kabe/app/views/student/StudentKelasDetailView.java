@@ -14,7 +14,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
-public class KelasDetailView {
+import com.kabe.app.views.interfaces.ViewInterface;
+
+public class StudentKelasDetailView implements ViewInterface {
     private Stage stage;
     private Scene scene;
     private BorderPane root;
@@ -22,15 +24,11 @@ public class KelasDetailView {
     private Kelas kelasData;
     private NavigationHandler navigationHandler;
 
-    public interface NavigationHandler {
-        void handleNavigation(String viewName);
-    }
-
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
 
-    public KelasDetailView(Stage stage, Kelas kelasData) {
+    public StudentKelasDetailView(Stage stage, Kelas kelasData) {
         this.stage = stage;
         this.kelasData = kelasData;
         initializeView();

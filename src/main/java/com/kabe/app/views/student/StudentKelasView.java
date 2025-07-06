@@ -292,8 +292,36 @@ public class StudentKelasView implements KelasInterface {
         
         VBox headerText = new VBox(5);
         headerText.getChildren().addAll(headerTitle, headerSubtitle);
+
+        Button createBtn = new Button("+ Gabung Kelas Baru");
+        createBtn.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        createBtn.setStyle("-fx-background-color: #9C27B0; " +
+                         "-fx-text-fill: white; " +
+                         "-fx-background-radius: 8; " +
+                         "-fx-padding: 10 20 10 20; " +
+                         "-fx-cursor: hand;");
+        createBtn.setOnMouseEntered(e -> {
+            createBtn.setStyle("-fx-background-color: #7B1FA2; " +
+                             "-fx-text-fill: white; " +
+                             "-fx-background-radius: 8; " +
+                             "-fx-padding: 10 20 10 20; " +
+                             "-fx-cursor: hand;");
+        });
+        createBtn.setOnMouseExited(e -> {
+            createBtn.setStyle("-fx-background-color: #9C27B0; " +
+                             "-fx-text-fill: white; " +
+                             "-fx-background-radius: 8; " +
+                             "-fx-padding: 10 20 10 20; " +
+                             "-fx-cursor: hand;");
+        });
+        createBtn.setOnAction(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("GabungKelas");
+            }
+        });
         
-        header.getChildren().add(headerText);
+        HBox.setHgrow(headerText, Priority.ALWAYS);
+        header.getChildren().addAll(headerText, createBtn);
         
         return header;
     }
