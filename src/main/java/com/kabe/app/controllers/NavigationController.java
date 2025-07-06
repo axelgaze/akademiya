@@ -2,9 +2,11 @@ package com.kabe.app.controllers;
 
 import com.kabe.app.views.*;
 import javafx.stage.Stage;
+import com.kabe.app.controllers.UserController;
 
 public class NavigationController {
     private Stage primaryStage;
+    UserController userController;
     
     public NavigationController(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -12,7 +14,7 @@ public class NavigationController {
     
     public void showLoginView() {
         LoginView loginView = new LoginView(primaryStage);
-        new LoginController(loginView);
+        userController = new UserController(loginView);
         loginView.show();
         
         loginView.setOnLoginSuccess(() -> {
@@ -21,7 +23,7 @@ public class NavigationController {
     }
     
     public void showDashboardView() {
-        DashboardView dashboardView = new DashboardView(primaryStage);
+        DashboardView dashboardView = new DashboardView(primaryStage, userController);
         dashboardView.show();
         
         dashboardView.setNavigationHandler(this::navigate);

@@ -1,7 +1,13 @@
-C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\LoginController.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\NavigationController.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\controllers\UserController.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\dao\UserDAO.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\MainApp.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\Kelas.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\KelasSiswa.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\LampiranSiswa.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\MateriKelas.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\Tugas.java
+C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\TugasLampiran.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\models\User.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\utils\DatabaseConnector.java
 C:\Users\brama\Documents\setis\Semester 4\PBO\akademiya\akademiya\src\main\java\com\kabe\app\views\CalendarView.java

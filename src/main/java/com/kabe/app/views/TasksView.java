@@ -20,6 +20,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+import com.kabe.app.controllers.UserController;
+
 public class TasksView {
     private Stage stage;
     private Scene scene;

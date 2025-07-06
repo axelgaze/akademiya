@@ -18,6 +18,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import com.kabe.app.controllers.UserController;
+
 public class KelasView {
     private Stage stage;
     private Scene scene;

@@ -18,6 +18,8 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import com.kabe.app.controllers.UserController;
+
 import com.kabe.app.dao.UserDAO;
 import com.kabe.app.models.User;
 
@@ -302,7 +304,7 @@ public class LoginView {
     }
 
     public String getRegisterRole() {
-        return studentRadio.isSelected() ? "student" : "teacher";
+        return studentRadio.isSelected() ? "siswa" : "pengajar";
     }
     
     private PasswordField createStyledPasswordField(String placeholder) {

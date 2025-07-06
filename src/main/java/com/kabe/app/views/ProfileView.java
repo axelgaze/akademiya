@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+import com.kabe.app.controllers.UserController;
 
 public class ProfileView {
     private Stage stage;

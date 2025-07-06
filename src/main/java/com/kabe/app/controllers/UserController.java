@@ -4,12 +4,14 @@ import com.kabe.app.models.User;
 import com.kabe.app.views.LoginView;
 
 import javafx.scene.control.Alert;
+import com.kabe.app.controllers.NavigationController;
 
-public class LoginController {
+public class UserController {
     private UserDAO userDAO;
     private LoginView loginView;
+    private User user;
 
-    public LoginController(LoginView loginView) {
+    public UserController(LoginView loginView) {
         this.userDAO = new UserDAO();
         this.loginView = loginView;
         setupEventHandlers();
@@ -24,7 +26,7 @@ public class LoginController {
         String username = loginView.getLoginUsername();
         String password = loginView.getLoginPassword();
         
-        User user = userDAO.authenticate(username, password);
+        this.user = userDAO.authenticate(username, password);
         
         if (user != null) {
             loginView.showAlert(Alert.AlertType.INFORMATION, "Login Berhasil", 
@@ -53,5 +55,9 @@ public class LoginController {
             loginView.showAlert(Alert.AlertType.ERROR, "Registrasi Gagal", 
                 "Gagal membuat akun, coba lagi");
         }
+    }
+
+    public User getUser() {
+        return user;
     }
 }
