@@ -1,4 +1,4 @@
-package com.kabe.app.views;
+package com.kabe.app.views.student;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

@@ -1,4 +1,4 @@
-package com.kabe.app.views;
+package com.kabe.app.views.student;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,52 +11,56 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
-import com.kabe.app.models.User;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+
 import com.kabe.app.controllers.UserController;
+import com.kabe.app.views.interfaces.ViewInterface;
 
-public class DashboardView {
+public class StudentTasksView implements ViewInterface {
     private Stage stage;
     private Scene scene;
     private BorderPane root;
     private VBox sidebar;
     private VBox mainContent;
-    private NavigationHandler navigationHandler;
+    private TextField searchField;
+    private ComboBox<String> statusFilter;
+    private ComboBox<String> classFilter;
+    private VBox tasksContainer;
+    private ViewInterface.NavigationHandler navigationHandler;
     private UserController userController;
-    
-    public DashboardView(Stage stage, UserController userController) {
-        this.userController = userController;
-        this.stage = stage;
-        initializeView();
-    }
-
-    public interface NavigationHandler {
-        void handleNavigation(String viewName);
-    }
 
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
     
+    public StudentTasksView(Stage stage, UserController userController) {
+        this.userController = userController;
+        this.stage = stage;
+        initializeView();
+    }
+    
     private void initializeView() {
         root = new BorderPane();
         
-        // Background with Sumeru-inspired gradient
+        // Background with gradient
         LinearGradient backgroundGradient = new LinearGradient(
             0, 0, 1, 1, true, null,
-            new Stop(0, Color.web("#F1F8E9")), // Light green
-            new Stop(0.5, Color.web("#E8F5E8")), // Very light green
-            new Stop(1, Color.web("#C8E6C9"))  // Soft green
+            new Stop(0, Color.web("#F1F8E9")),
+            new Stop(0.5, Color.web("#E8F5E8")),
+            new Stop(1, Color.web("#C8E6C9"))
         );
         
         BackgroundFill backgroundFill = new BackgroundFill(backgroundGradient, null, null);
         root.setBackground(new Background(backgroundFill));
         
-        // Create sidebar
         createSidebar();
-        
-        // Create main content
         createMainContent();
 
         ScrollPane scrollPane = new ScrollPane(mainContent);
@@ -69,7 +73,7 @@ public class DashboardView {
         root.setCenter(scrollPane);
         
         scene = new Scene(root, 1200, 800);
-        stage.setTitle("Akademiya - Dashboard");
+        stage.setTitle("Akademiya - Tugas");
         stage.setScene(scene);
     }
     
@@ -81,8 +85,8 @@ public class DashboardView {
         // Sidebar background
         LinearGradient sidebarGradient = new LinearGradient(
             0, 0, 1, 0, true, null,
-            new Stop(0, Color.web("#2D5016")), // Dark forest green
-            new Stop(1, Color.web("#3D6B1F"))  // Medium forest green
+            new Stop(0, Color.web("#2D5016")),
+            new Stop(1, Color.web("#3D6B1F"))
         );
         
         BackgroundFill sidebarFill = new BackgroundFill(sidebarGradient, 
@@ -91,7 +95,7 @@ public class DashboardView {
         sidebar.setBackground(new Background(sidebarFill));
         sidebar.setEffect(new DropShadow(15, Color.web("#1A3009")));
         
-        // Logo and title
+        // Logo
         VBox logoContainer = new VBox(5);
         logoContainer.setAlignment(Pos.CENTER);
         
@@ -109,8 +113,8 @@ public class DashboardView {
         VBox navigationMenu = new VBox(10);
         navigationMenu.setPadding(new Insets(20, 0, 0, 0));
         
-        Button dashboardBtn = createMenuButton("🏠 Dashboard", true);
-        Button tasksBtn = createMenuButton("📋 Tugas", false);
+        Button dashboardBtn = createMenuButton("🏠 Dashboard", false);
+        Button tasksBtn = createMenuButton("📋 Tugas", true);
         Button classesBtn = createMenuButton("🏫 Kelas", false);
         Button calendarBtn = createMenuButton("📅 Kalender", false);
         Button profileBtn = createMenuButton("👤 Profile", false);
@@ -118,8 +122,8 @@ public class DashboardView {
         navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn, profileBtn);
 
         dashboardBtn.setOnAction(e -> {
-        if (navigationHandler != null) {
-            navigationHandler.handleNavigation("Dashboard");
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("Dashboard");
             }
         });
 
@@ -148,7 +152,7 @@ public class DashboardView {
         });
         
         
-        // User info at bottom
+        // User info
         VBox userInfo = new VBox(10);
         userInfo.setAlignment(Pos.CENTER);
         userInfo.setPadding(new Insets(20, 0, 0, 0));
@@ -203,7 +207,6 @@ public class DashboardView {
                            "-fx-cursor: hand;");
         }
         
-        // Hover effect
         button.setOnMouseEntered(e -> {
             if (!isActive) {
                 button.setStyle("-fx-background-color: rgba(255, 255, 255, 0.1); " +
@@ -234,11 +237,11 @@ public class DashboardView {
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(0, 0, 20, 0));
         
-        Label headerTitle = new Label("Dashboard");
+        Label headerTitle = new Label("Tugas");
         headerTitle.setFont(Font.font("Arial", FontWeight.BOLD, 32));
         headerTitle.setTextFill(Color.web("#2D5016"));
         
-        Label headerSubtitle = new Label("Ringkasan aktivitas pembelajaran Anda");
+        Label headerSubtitle = new Label("Kelola dan kumpulkan tugas Anda");
         headerSubtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 16));
         headerSubtitle.setTextFill(Color.web("#4A7C26"));
         
@@ -247,158 +250,157 @@ public class DashboardView {
         
         header.getChildren().add(headerText);
         
-        // Statistics cards
-        HBox statisticsContainer = createStatisticsCards();
+        // Search and filter section
+        HBox searchFilterContainer = createSearchFilterSection();
         
-        // Recent activities
-        VBox recentActivities = createRecentActivities();
+        // Tasks container
+        createTasksContainer();
         
-        mainContent.getChildren().addAll(header, statisticsContainer, recentActivities);
+        mainContent.getChildren().addAll(header, searchFilterContainer, tasksContainer);
     }
     
-    private HBox createStatisticsCards() {
+    private HBox createSearchFilterSection() {
         HBox container = new HBox(20);
-        container.setAlignment(Pos.CENTER);
+        container.setAlignment(Pos.CENTER_LEFT);
+        container.setPadding(new Insets(0, 0, 20, 0));
         
-        // Completed tasks card
-        VBox completedCard = createStatCard("✅", "Tugas Selesai", "12", Color.web("#4CAF50"));
+        // Search field
+        searchField = new TextField();
+        searchField.setPromptText("Cari tugas...");
+        searchField.setPrefWidth(300);
+        searchField.setPrefHeight(40);
+        searchField.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        searchField.setStyle("-fx-background-color: white; " +
+                           "-fx-background-radius: 10; " +
+                           "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                           "-fx-border-radius: 10; " +
+                           "-fx-padding: 10;");
         
-        // Pending tasks card  
-        VBox pendingCard = createStatCard("⏳", "Tugas Tertunda", "5", Color.web("#FF9800"));
+        // Status filter
+        statusFilter = new ComboBox<>();
+        statusFilter.getItems().addAll("Semua Status", "Belum Dikumpulkan", "Sudah Dikumpulkan", "Terlambat");
+        statusFilter.setValue("Semua Status");
+        statusFilter.setPrefWidth(150);
+        statusFilter.setPrefHeight(40);
+        statusFilter.setStyle("-fx-background-color: white; " +
+                            "-fx-background-radius: 10; " +
+                            "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                            "-fx-border-radius: 10;");
         
-        // Overdue tasks card
-        VBox overdueCard = createStatCard("⚠️", "Tugas Terlambat", "2", Color.web("#F44336"));
+        // Class filter
+        classFilter = new ComboBox<>();
+        classFilter.getItems().addAll("Semua Kelas", "Matematika", "Fisika", "Kimia", "Biologi", "Bahasa Indonesia");
+        classFilter.setValue("Semua Kelas");
+        classFilter.setPrefWidth(150);
+        classFilter.setPrefHeight(40);
+        classFilter.setStyle("-fx-background-color: white; " +
+                           "-fx-background-radius: 10; " +
+                           "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                           "-fx-border-radius: 10;");
         
-        // Total classes card
-        VBox classesCard = createStatCard("🏫", "Total Kelas", "8", Color.web("#2196F3"));
-        
-        container.getChildren().addAll(completedCard, pendingCard, overdueCard, classesCard);
-        
-        return container;
-    }
-    
-    private VBox createStatCard(String icon, String title, String value, Color color) {
-        VBox card = new VBox(15);
-        card.setAlignment(Pos.CENTER);
-        card.setPrefWidth(250);
-        card.setPrefHeight(140);
-        card.setPadding(new Insets(20));
-        
-        // Card background
-        card.setStyle("-fx-background-color: white; " +
-                     "-fx-background-radius: 15; " +
-                     "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                     "-fx-border-width: 1; " +
-                     "-fx-border-radius: 15;");
-        card.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
-        
-        // Icon
-        Label iconLabel = new Label(icon);
-        iconLabel.setFont(Font.font(32));
-        
-        // Value
-        Label valueLabel = new Label(value);
-        valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
-        valueLabel.setTextFill(color);
-        
-        // Title
-        Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        titleLabel.setTextFill(Color.web("#666666"));
-        
-        card.getChildren().addAll(iconLabel, valueLabel, titleLabel);
-        
-        // Hover effect
-        card.setOnMouseEntered(e -> {
-            card.setStyle("-fx-background-color: white; " +
-                         "-fx-background-radius: 15; " +
-                         "-fx-border-color: " + toHexString(color) + "; " +
-                         "-fx-border-width: 2; " +
-                         "-fx-border-radius: 15; " +
-                         "-fx-cursor: hand;");
-        });
-        
-        card.setOnMouseExited(e -> {
-            card.setStyle("-fx-background-color: white; " +
-                         "-fx-background-radius: 15; " +
-                         "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                         "-fx-border-width: 1; " +
-                         "-fx-border-radius: 15;");
-        });
-        
-        return card;
-    }
-    
-    private VBox createRecentActivities() {
-        VBox container = new VBox(20);
-        
-        // Section header
-        Label sectionTitle = new Label("Aktivitas Terbaru");
-        sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        sectionTitle.setTextFill(Color.web("#2D5016"));
-        
-        // Activities container
-        VBox activitiesContainer = new VBox(10);
-        activitiesContainer.setPadding(new Insets(20));
-        activitiesContainer.setStyle("-fx-background-color: white; " +
-                                   "-fx-background-radius: 15; " +
-                                   "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                                   "-fx-border-width: 1; " +
-                                   "-fx-border-radius: 15;");
-        activitiesContainer.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
-        
-        // Sample activities
-        HBox activity1 = createActivityItem("📋", "Tugas Matematika Bab 5 telah dinilai", "2 jam yang lalu", Color.web("#4CAF50"));
-        HBox activity2 = createActivityItem("📚", "Materi baru ditambahkan di kelas Fisika", "4 jam yang lalu", Color.web("#2196F3"));
-        HBox activity3 = createActivityItem("👥", "Revisi dari kelompok untuk Proyek Biologi", "6 jam yang lalu", Color.web("#FF9800"));
-        HBox activity4 = createActivityItem("🔔", "Pemberitahuan dari Bu Sarah: Kelas besok pindah ruang", "8 jam yang lalu", Color.web("#9C27B0"));
-        HBox activity5 = createActivityItem("📝", "Tugas Bahasa Indonesia deadline besok", "1 hari yang lalu", Color.web("#F44336"));
-        
-        activitiesContainer.getChildren().addAll(activity1, activity2, activity3, activity4, activity5);
-        
-        container.getChildren().addAll(sectionTitle, activitiesContainer);
+        container.getChildren().addAll(searchField, statusFilter, classFilter);
         
         return container;
     }
     
-    private HBox createActivityItem(String icon, String description, String time, Color color) {
-        HBox item = new HBox(15);
+    private void createTasksContainer() {
+        tasksContainer = new VBox(15);
+        tasksContainer.setPadding(new Insets(20));
+        tasksContainer.setStyle("-fx-background-color: white; " +
+                              "-fx-background-radius: 15; " +
+                              "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                              "-fx-border-width: 1; " +
+                              "-fx-border-radius: 15;");
+        tasksContainer.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
+        
+        // Sample tasks
+        HBox task1 = createTaskItem("Tugas Matematika - Integral", "Matematika", "Bu Sari", "2024-01-15", "Belum Dikumpulkan", false);
+        HBox task2 = createTaskItem("Laporan Praktikum Fisika", "Fisika", "Pak Budi", "2024-01-12", "Sudah Dikumpulkan", false);
+        HBox task3 = createTaskItem("Proyek Biologi - Ekosistem", "Biologi", "Bu Rina", "2024-01-20", "Belum Dikumpulkan", true);
+        HBox task4 = createTaskItem("Essay Bahasa Indonesia", "Bahasa Indonesia", "Pak Ahmad", "2024-01-10", "Terlambat", false);
+        HBox task5 = createTaskItem("Eksperimen Kimia Organik", "Kimia", "Bu Dewi", "2024-01-18", "Belum Dikumpulkan", true);
+        
+        tasksContainer.getChildren().addAll(task1, task2, task3, task4, task5);
+    }
+    
+    private HBox createTaskItem(String title, String className, String teacher, String deadline, String status, boolean isGroupTask) {
+        HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
         item.setStyle("-fx-background-color: transparent; " +
                      "-fx-background-radius: 10; " +
                      "-fx-cursor: hand;");
         
-        // Icon container
-        VBox iconContainer = new VBox();
-        iconContainer.setAlignment(Pos.CENTER);
-        iconContainer.setPrefWidth(40);
-        iconContainer.setPrefHeight(40);
-        iconContainer.setStyle("-fx-background-color: " + toHexString(color.deriveColor(0, 1, 1, 0.1)) + "; " +
-                              "-fx-background-radius: 20;");
+        // Task icon
+        Label taskIcon = new Label(isGroupTask ? "📚" : "📔");
+        taskIcon.setFont(Font.font(24));
+        taskIcon.setTextFill(Color.web("#123456"));
         
-        Label iconLabel = new Label(icon);
-        iconLabel.setFont(Font.font(18));
-        iconContainer.getChildren().add(iconLabel);
+        // Task info
+        VBox taskInfo = new VBox(5);
+        taskInfo.setAlignment(Pos.CENTER_LEFT);
         
-        // Text container
-        VBox textContainer = new VBox(5);
-        textContainer.setAlignment(Pos.CENTER_LEFT);
+        Label titleLabel = new Label(title);
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        titleLabel.setTextFill(Color.web("#2D5016"));
         
-        Label descriptionLabel = new Label(description);
-        descriptionLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        descriptionLabel.setTextFill(Color.web("#333333"));
-        descriptionLabel.setWrapText(true);
+        Label classLabel = new Label(className + " - " + teacher);
+        classLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        classLabel.setTextFill(Color.web("#666666"));
         
-        Label timeLabel = new Label(time);
-        timeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
-        timeLabel.setTextFill(Color.web("#888888"));
+        Label deadlineLabel = new Label("Deadline: " + deadline);
+        deadlineLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        deadlineLabel.setTextFill(Color.web("#888888"));
         
-        textContainer.getChildren().addAll(descriptionLabel, timeLabel);
+        taskInfo.getChildren().addAll(titleLabel, classLabel, deadlineLabel);
         
-        item.getChildren().addAll(iconContainer, textContainer);
-        HBox.setHgrow(textContainer, Priority.ALWAYS);
+        // Status badge
+        Label statusBadge = new Label(status);
+        statusBadge.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        statusBadge.setPadding(new Insets(5, 10, 5, 10));
+        statusBadge.setStyle("-fx-background-radius: 15;");
         
+        switch (status) {
+            case "Belum Dikumpulkan":
+                statusBadge.setStyle("-fx-background-color: #FFF3E0; " +
+                                   "-fx-text-fill: #FF9800; " +
+                                   "-fx-background-radius: 15;");
+                break;
+            case "Sudah Dikumpulkan":
+                statusBadge.setStyle("-fx-background-color: #E8F5E9; " +
+                                   "-fx-text-fill: #4CAF50; " +
+                                   "-fx-background-radius: 15;");
+                break;
+            case "Terlambat":
+                statusBadge.setStyle("-fx-background-color: #FFEBEE; " +
+                                   "-fx-text-fill: #F44336; " +
+                                   "-fx-background-radius: 15;");
+                break;
+        }
+        
+        // Group task indicator
+        VBox rightContainer = new VBox(5);
+        rightContainer.setAlignment(Pos.CENTER_RIGHT);
+        rightContainer.getChildren().add(statusBadge);
+        
+        if (isGroupTask) {
+            Label groupLabel = new Label("Tugas Kelompok");
+            groupLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 10));
+            groupLabel.setTextFill(Color.web("#9C27B0"));
+            rightContainer.getChildren().add(groupLabel);
+        }
+        
+        item.getChildren().addAll(taskIcon, taskInfo, rightContainer);
+        HBox.setHgrow(taskInfo, Priority.ALWAYS);
+        
+        // Click event
+        //item.setOnMouseClicked(e -> showTaskDetailDialog(title, className, teacher, deadline, status, isGroupTask));
+        item.setOnMouseClicked(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("TaskDetail:" + title + ":" + className + ":" + teacher + ":" + deadline + ":" + status + ":" + isGroupTask);
+            }
+        });
+
         // Hover effect
         item.setOnMouseEntered(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.05); " +
@@ -413,13 +415,6 @@ public class DashboardView {
         });
         
         return item;
-    }
-    
-    private String toHexString(Color color) {
-        return String.format("#%02X%02X%02X",
-                           (int)(color.getRed() * 255),
-                           (int)(color.getGreen() * 255),
-                           (int)(color.getBlue() * 255));
     }
     
     public void show() {

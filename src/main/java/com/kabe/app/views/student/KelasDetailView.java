@@ -1,4 +1,5 @@
-package com.kabe.app.views;
+package com.kabe.app.views.student;
+import com.kabe.app.models.Kelas;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -18,7 +19,7 @@ public class KelasDetailView {
     private Scene scene;
     private BorderPane root;
     private VBox mainContent;
-    private KelasView.KelasData kelasData;
+    private Kelas kelasData;
     private NavigationHandler navigationHandler;
 
     public interface NavigationHandler {
@@ -29,7 +30,7 @@ public class KelasDetailView {
         this.navigationHandler = handler;
     }
 
-    public KelasDetailView(Stage stage, KelasView.KelasData kelasData) {
+    public KelasDetailView(Stage stage, Kelas kelasData) {
         this.stage = stage;
         this.kelasData = kelasData;
         initializeView();

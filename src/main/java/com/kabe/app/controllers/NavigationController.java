@@ -1,8 +1,12 @@
 package com.kabe.app.controllers;
 
 import com.kabe.app.views.*;
+import com.kabe.app.views.student.*;
+import com.kabe.app.views.teacher.*;
 import javafx.stage.Stage;
 import com.kabe.app.controllers.UserController;
+import com.kabe.app.views.interfaces.*;
+import com.kabe.app.models.*;
 
 public class NavigationController {
     private Stage primaryStage;
@@ -23,14 +27,25 @@ public class NavigationController {
     }
     
     public void showDashboardView() {
-        DashboardView dashboardView = new DashboardView(primaryStage, userController);
+        ViewInterface dashboardView;
+        if (userController.getUser().getRole().equals("siswa")) {
+            dashboardView = new StudentDashboardView(primaryStage, userController);
+        } else {
+            dashboardView = new TeacherDashboardView(primaryStage, userController);
+        }
+
         dashboardView.show();
         
         dashboardView.setNavigationHandler(this::navigate);
     }
     
     public void showTasksView() {
-        TasksView tasksView = new TasksView(primaryStage);
+        ViewInterface tasksView;
+        if (userController.getUser().getRole().equals("siswa")) {
+            tasksView = new StudentTasksView(primaryStage, userController);
+        } else {
+            tasksView = new TeacherTasksView(primaryStage, userController);
+        }
         tasksView.show();
         
         tasksView.setNavigationHandler(viewName -> {
@@ -58,12 +73,17 @@ public class NavigationController {
     }
     
     public void showKelasView() {
-        KelasView kelasView = new KelasView(primaryStage);
+        KelasInterface kelasView;
+        if (userController.getUser().getRole().equals("siswa")) {
+            kelasView = new StudentKelasView(primaryStage, userController);
+        } else {
+            kelasView = new TeacherKelasView(primaryStage, userController);
+        }
         kelasView.show();
         
         kelasView.setNavigationHandler(viewName -> {
             if ("KelasDetail".equals(viewName)) {
-                KelasView.KelasData selectedKelas = kelasView.getSelectedKelas();
+                Kelas selectedKelas = kelasView.getSelectedKelas();
                 showDetailKelasView(selectedKelas);
             } else {
                 navigate(viewName);
@@ -71,7 +91,7 @@ public class NavigationController {
         });
     }
     
-    public void showDetailKelasView(KelasView.KelasData selectedKelas) {
+    public void showDetailKelasView(Kelas selectedKelas) {
         KelasDetailView kelasDetailView = new KelasDetailView(primaryStage, selectedKelas);
         kelasDetailView.show();
         
@@ -79,14 +99,14 @@ public class NavigationController {
     }
     
     public void showCalendarView() {
-        CalendarView calendarView = new CalendarView(primaryStage);
+        CalendarView calendarView = new CalendarView(primaryStage, userController);
         calendarView.show();
         
         calendarView.setNavigationHandler(this::navigate);
     }
     
     public void showProfileView() {
-        ProfileView profileView = new ProfileView(primaryStage);
+        ProfileView profileView = new ProfileView(primaryStage, userController);
         profileView.show();
         
         profileView.setNavigationHandler(this::navigate);

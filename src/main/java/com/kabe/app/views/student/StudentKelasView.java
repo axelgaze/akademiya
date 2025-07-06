@@ -1,4 +1,4 @@
-package com.kabe.app.views;
+package com.kabe.app.views.student;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -19,8 +19,10 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import com.kabe.app.controllers.UserController;
+import com.kabe.app.views.interfaces.KelasInterface;
+import com.kabe.app.models.Kelas;
 
-public class KelasView {
+public class StudentKelasView implements KelasInterface {
     private Stage stage;
     private Scene scene;
     private BorderPane root;
@@ -30,18 +32,15 @@ public class KelasView {
     private TextField searchField;
     private ComboBox<String> filterComboBox;
     private NavigationHandler navigationHandler;
-    private KelasData selectedKelas;
+    private Kelas selectedKelas;
+    private UserController userController;
 
-    public KelasData getSelectedKelas() {
-    return selectedKelas;
+    public Kelas getSelectedKelas() {
+        return selectedKelas;
     }
 
-    public void setSelectedKelas(KelasData kelas) {
+    public void setSelectedKelas(Kelas kelas) {
         this.selectedKelas = kelas;
-    }
-
-    public interface NavigationHandler {
-        void handleNavigation(String viewName);
     }
 
     public void setNavigationHandler(NavigationHandler handler) {
@@ -49,32 +48,33 @@ public class KelasView {
     }
     
     // Sample data
-    private ObservableList<KelasData> kelasList = FXCollections.observableArrayList();
+    private ObservableList<Kelas> kelasList = FXCollections.observableArrayList();
     
-    public KelasView(Stage stage) {
+    public StudentKelasView(Stage stage, UserController userController) {
         this.stage = stage;
+        this.userController = userController;
         initializeSampleData();
         initializeView();
     }
     
     private void initializeSampleData() {
         kelasList.addAll(
-            new KelasData("Matematika Lanjutan", "Bu Sarah Wijaya", "MAT-301", 25, 
+            new Kelas("Matematika Lanjutan", "Bu Sarah Wijaya", "MAT-301", 25, 
                          "Kelas matematika untuk siswa tingkat lanjut dengan fokus pada kalkulus dan statistik.", 
                          new String[]{"John Doe", "Jane Smith", "Michael Johnson", "Emily Davis", "Robert Brown"}),
-            new KelasData("Fisika Quantum", "Pak Ahmad Rizki", "FIS-201", 20,
+            new Kelas("Fisika Quantum", "Pak Ahmad Rizki", "FIS-201", 20,
                          "Memahami konsep dasar fisika quantum dan aplikasinya dalam teknologi modern.",
                          new String[]{"Alice Wilson", "Bob Taylor", "Charlie Anderson", "Diana Martinez", "Edward Clark"}),
-            new KelasData("Kimia Organik", "Dr. Lisa Chen", "KIM-401", 18,
+            new Kelas("Kimia Organik", "Dr. Lisa Chen", "KIM-401", 18,
                          "Studi mendalam tentang senyawa organik dan reaksi-reaksinya.",
                          new String[]{"Frank Lewis", "Grace Walker", "Henry Hall", "Ivy Young", "Jack King"}),
-            new KelasData("Biologi Molekuler", "Prof. David Kumar", "BIO-501", 22,
+            new Kelas("Biologi Molekuler", "Prof. David Kumar", "BIO-501", 22,
                          "Eksplorasi struktur dan fungsi molekul dalam sistem biologis.",
                          new String[]{"Karen Wright", "Leo Lopez", "Mia Hill", "Noah Green", "Olivia Adams"}),
-            new KelasData("Bahasa Indonesia", "Ibu Siti Nurhaliza", "BHS-101", 30,
+            new Kelas("Bahasa Indonesia", "Ibu Siti Nurhaliza", "BHS-101", 30,
                          "Pembelajaran bahasa Indonesia yang mencakup sastra dan tata bahasa.",
                          new String[]{"Paul Baker", "Quinn Rivera", "Ruby Campbell", "Sam Mitchell", "Tina Cooper"}),
-            new KelasData("Sejarah Dunia", "Pak Bambang Sutrisno", "SEJ-201", 28,
+            new Kelas("Sejarah Dunia", "Pak Bambang Sutrisno", "SEJ-201", 28,
                          "Memahami peristiwa-peristiwa penting dalam sejarah dunia.",
                          new String[]{"Uma Patel", "Victor Ross", "Wendy Morgan", "Xavier Bell", "Yara Foster"})
         );
@@ -192,11 +192,11 @@ public class KelasView {
         userAvatar.setFont(Font.font(32));
         userAvatar.setTextFill(Color.web("#E8F5E8"));
         
-        Label userName = new Label("John Doe");
+        Label userName = new Label(userController.getUser().getFullName());
         userName.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         userName.setTextFill(Color.web("#E8F5E8"));
         
-        Label userRole = new Label("Pelajar");
+        Label userRole = new Label(userController.getUser().getRole());
         userRole.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         userRole.setTextFill(Color.web("#C8E6C9"));
         
@@ -361,7 +361,7 @@ public class KelasView {
         int row = 0;
         int maxColumns = 3;
         
-        for (KelasData kelas : kelasList) {
+        for (Kelas kelas : kelasList) {
             VBox kelasCard = createKelasCard(kelas);
             kelasGrid.add(kelasCard, column, row);
             
@@ -373,7 +373,7 @@ public class KelasView {
         }
     }
     
-    private VBox createKelasCard(KelasData kelas) {
+    private VBox createKelasCard(Kelas kelas) {
         VBox card = new VBox(15);
         card.setAlignment(Pos.TOP_LEFT);
         card.setPrefWidth(320);
@@ -449,7 +449,7 @@ public class KelasView {
         return card;
     }
     
-    private void showKelasDetail(KelasData kelas) {
+    private void showKelasDetail(Kelas kelas) {
         // Apply blur effect to main content
         BoxBlur blur = new BoxBlur(5, 5, 3);
         root.setEffect(blur);
@@ -552,7 +552,7 @@ public class KelasView {
         root.setEffect(null);
     }
     
-    private VBox createAnggotaContent(KelasData kelas) {
+    private VBox createAnggotaContent(Kelas kelas) {
         VBox content = new VBox(10);
         content.setPadding(new Insets(20));
         
@@ -779,39 +779,5 @@ public class KelasView {
         stage.show();
     }
     
-    // Inner class for kelas data
-    public static class KelasData {
-        private String nama;
-        private String pengajar;
-        private String kode;
-        private int jumlahSiswa;
-        private String deskripsi;
-        private String[] anggota;
-        
-        public KelasData(String nama, String pengajar, String kode, int jumlahSiswa, 
-                        String deskripsi, String[] anggota) {
-            this.nama = nama;
-            this.pengajar = pengajar;
-            this.kode = kode;
-            this.jumlahSiswa = jumlahSiswa;
-            this.deskripsi = deskripsi;
-            this.anggota = anggota;
-        }
-        
-        // Getters
-        public String getNama() { return nama; }
-        public String getPengajar() { return pengajar; }
-        public String getKode() { return kode; }
-        public int getJumlahSiswa() { return jumlahSiswa; }
-        public String getDeskripsi() { return deskripsi; }
-        public String[] getAnggota() { return anggota; }
-        
-        // Setters
-        public void setNama(String nama) { this.nama = nama; }
-        public void setPengajar(String pengajar) { this.pengajar = pengajar; }
-        public void setKode(String kode) { this.kode = kode; }
-        public void setJumlahSiswa(int jumlahSiswa) { this.jumlahSiswa = jumlahSiswa; }
-        public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }
-        public void setAnggota(String[] anggota) { this.anggota = anggota; }
-    }
+    
 }

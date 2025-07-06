@@ -1,4 +1,4 @@
-package com.kabe.app.views;
+package com.kabe.app.views.student;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -38,6 +38,7 @@ public class ProfileView {
     private Label roleLabel;
     private Label usernameLabel;
     private NavigationHandler navigationHandler;
+    private UserController userController;
 
     public interface NavigationHandler {
         void handleNavigation(String viewName);
@@ -47,7 +48,8 @@ public class ProfileView {
         this.navigationHandler = handler;
     }
     
-    public ProfileView(Stage stage) {
+    public ProfileView(Stage stage, UserController userController) {
+        this.userController = userController;
         this.stage = stage;
         initializeView();
     }
@@ -170,11 +172,11 @@ public class ProfileView {
         userAvatar.setFont(Font.font(32));
         userAvatar.setTextFill(Color.web("#E8F5E8"));
         
-        Label userName = new Label("John Doe");
+        Label userName = new Label(userController.getUser().getFullName());
         userName.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         userName.setTextFill(Color.web("#E8F5E8"));
         
-        Label userRole = new Label("Pelajar");
+        Label userRole = new Label(userController.getUser().getRole());
         userRole.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         userRole.setTextFill(Color.web("#C8E6C9"));
         
