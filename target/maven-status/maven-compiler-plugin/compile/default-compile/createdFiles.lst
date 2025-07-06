@@ -4,6 +4,7 @@ com\kabe\app\views\TaskDetailView$NavigationHandler.class
 com\kabe\app\views\KelasView$KelasData.class
 com\kabe\app\views\DashboardView$NavigationHandler.class
 com\kabe\app\MainApp.class
+com\kabe\app\controllers\NavigationController.class
 com\kabe\app\views\KelasView.class
 com\kabe\app\views\TasksView$NavigationHandler.class
 com\kabe\app\views\ProfileView.class
