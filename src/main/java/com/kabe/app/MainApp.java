@@ -64,22 +64,45 @@ public class MainApp extends Application {
         tasksView.show();
         
         tasksView.setNavigationHandler(viewName -> {
-            switch(viewName) {
-                case "Dashboard":
-                    showDashboardView();
-                    break;
-                case "Kelas":
-                    showKelasView();
-                    break;
-                case "Kalender":
-                    showCalendarView();
-                    break;
-                case "Profile":
-                    showProfileView();
-                    break;
-                case "Logout":
-                    showLoginView();
-                    break;
+            if (viewName.startsWith("TaskDetail:")) {
+                showDetailTasksView(viewName);
+            } else {
+                switch(viewName) {
+                    case "Dashboard":
+                        showDashboardView();
+                        break;
+                    case "Kelas":
+                        showKelasView();
+                        break;
+                    case "Kalender":
+                        showCalendarView();
+                        break;
+                    case "Profile":
+                        showProfileView();
+                        break;
+                    case "Logout":
+                        showLoginView();
+                        break;
+                }
+            }
+        });
+    }
+
+    public void showDetailTasksView(String viewNames) {
+        String[] params = viewNames.split(":");
+        String title = params[1];
+        String className = params[2];
+        String teacher = params[3];
+        String deadline = params[4];
+        String status = params[5];
+        boolean isGroupTask = Boolean.parseBoolean(params[6]);
+        
+        TaskDetailView taskDetailView = new TaskDetailView(primaryStage, title, className, teacher, deadline, status, isGroupTask);
+        taskDetailView.show();
+
+        taskDetailView.setNavigationHandler(viewName -> {
+            if (viewName == "Tugas") {
+                showTasksView();
             }
         });
     }
@@ -89,22 +112,38 @@ public class MainApp extends Application {
         kelasView.show();
         
         kelasView.setNavigationHandler(viewName -> {
-            switch(viewName) {
-                case "Dashboard":
-                    showDashboardView();
-                    break;
-                case "Tugas":
-                    showTasksView();
-                    break;
-                case "Kalender":
-                    showCalendarView();
-                    break;
-                case "Profile":
-                    showProfileView();
-                    break;
-                case "Logout":
-                    showLoginView();
-                    break;
+            if ("KelasDetail".equals(viewName)) {
+                KelasView.KelasData selectedKelas = kelasView.getSelectedKelas();
+                showDetailKelasView(selectedKelas);
+            } else {
+                switch(viewName) {
+                    case "Dashboard":
+                        showDashboardView();
+                        break;
+                    case "Tugas":
+                        showTasksView();
+                        break;
+                    case "Kalender":
+                        showCalendarView();
+                        break;
+                    case "Profile":
+                        showProfileView();
+                        break;
+                    case "Logout":
+                        showLoginView();
+                        break;
+                }
+            }
+        });
+    }
+
+    public void showDetailKelasView(KelasView.KelasData selectedKelas) {
+        KelasDetailView kelasDetailView = new KelasDetailView(primaryStage, selectedKelas);
+        kelasDetailView.show();
+
+        kelasDetailView.setNavigationHandler(viewName -> {
+            if (viewName == "Kelas") {
+                showKelasView();
             }
         });
     }

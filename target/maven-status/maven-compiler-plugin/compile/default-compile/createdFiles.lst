@@ -1,10 +1,13 @@
+com\kabe\app\views\KelasDetailView$NavigationHandler.class
 com\kabe\app\dao\UserDAO.class
+com\kabe\app\views\TaskDetailView$NavigationHandler.class
 com\kabe\app\views\KelasView$KelasData.class
 com\kabe\app\views\DashboardView$NavigationHandler.class
 com\kabe\app\MainApp.class
 com\kabe\app\views\KelasView.class
 com\kabe\app\views\TasksView$NavigationHandler.class
 com\kabe\app\views\ProfileView.class
+com\kabe\app\views\KelasDetailView.class
 com\kabe\app\views\CalendarView$NavigationHandler.class
 com\kabe\app\views\KelasView$NavigationHandler.class
 com\kabe\app\models\User.class
@@ -13,6 +16,7 @@ com\kabe\app\controllers\LoginController.class
 com\kabe\app\views\TasksView.class
 com\kabe\app\views\CalendarView.class
 com\kabe\app\views\ProfileView$NavigationHandler.class
+com\kabe\app\views\TaskDetailView.class
 com\kabe\app\views\LoginView.class
 com\kabe\app\views\CalendarView$TaskInfo.class
 com\kabe\app\views\DashboardView.class

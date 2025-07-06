@@ -28,6 +28,15 @@ public class KelasView {
     private TextField searchField;
     private ComboBox<String> filterComboBox;
     private NavigationHandler navigationHandler;
+    private KelasData selectedKelas;
+
+    public KelasData getSelectedKelas() {
+    return selectedKelas;
+    }
+
+    public void setSelectedKelas(KelasData kelas) {
+        this.selectedKelas = kelas;
+    }
 
     public interface NavigationHandler {
         void handleNavigation(String viewName);
@@ -428,7 +437,12 @@ public class KelasView {
         });
         
         // Click handler
-        card.setOnMouseClicked(e -> showKelasDetail(kelas));
+        card.setOnMouseClicked(e -> {
+            if (navigationHandler != null) {
+                setSelectedKelas(kelas);
+                navigationHandler.handleNavigation("KelasDetail");
+            }
+        });
         
         return card;
     }

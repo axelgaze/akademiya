@@ -331,8 +331,9 @@ public class TasksView {
                      "-fx-cursor: hand;");
         
         // Task icon
-        Label taskIcon = new Label(isGroupTask ? "👥" : "📋");
+        Label taskIcon = new Label(isGroupTask ? "📚" : "📔");
         taskIcon.setFont(Font.font(24));
+        taskIcon.setTextFill(Color.web("#123456"));
         
         // Task info
         VBox taskInfo = new VBox(5);
@@ -392,8 +393,13 @@ public class TasksView {
         HBox.setHgrow(taskInfo, Priority.ALWAYS);
         
         // Click event
-        item.setOnMouseClicked(e -> showTaskDetailDialog(title, className, teacher, deadline, status, isGroupTask));
-        
+        //item.setOnMouseClicked(e -> showTaskDetailDialog(title, className, teacher, deadline, status, isGroupTask));
+        item.setOnMouseClicked(e -> {
+            if (navigationHandler != null) {
+                navigationHandler.handleNavigation("TaskDetail:" + title + ":" + className + ":" + teacher + ":" + deadline + ":" + status + ":" + isGroupTask);
+            }
+        });
+
         // Hover effect
         item.setOnMouseEntered(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.05); " +
@@ -408,257 +414,6 @@ public class TasksView {
         });
         
         return item;
-    }
-    
-    private void showTaskDetailDialog(String title, String className, String teacher, String deadline, String status, boolean isGroupTask) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initOwner(stage);
-        dialog.initStyle(StageStyle.UNDECORATED);
-        dialog.setTitle("Detail Tugas");
-        
-        // Create blur effect on background
-        stage.getScene().getRoot().setEffect(new javafx.scene.effect.GaussianBlur(10));
-        
-        VBox dialogContent = new VBox(20);
-        dialogContent.setPadding(new Insets(30));
-        dialogContent.setStyle("-fx-background-color: white; " +
-                              "-fx-background-radius: 20; " +
-                              "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                              "-fx-border-radius: 20;");
-        dialogContent.setEffect(new DropShadow(20, Color.web("#000000")));
-        
-        // Header
-        HBox header = new HBox();
-        header.setAlignment(Pos.CENTER_LEFT);
-        
-        Label dialogTitle = new Label("Detail Tugas");
-        dialogTitle.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        dialogTitle.setTextFill(Color.web("#2D5016"));
-        
-        Button closeBtn = new Button("✕");
-        closeBtn.setStyle("-fx-background-color: transparent; " +
-                         "-fx-text-fill: #666666; " +
-                         "-fx-font-size: 18px; " +
-                         "-fx-cursor: hand;");
-        closeBtn.setOnAction(e -> {
-            stage.getScene().getRoot().setEffect(null);
-            dialog.close();
-        });
-        
-        header.getChildren().addAll(dialogTitle);
-        HBox.setHgrow(dialogTitle, Priority.ALWAYS);
-        header.getChildren().add(closeBtn);
-        
-        // Task details
-        VBox taskDetails = new VBox(15);
-        
-        Label taskTitle = new Label(title);
-        taskTitle.setFont(Font.font("Arial", FontWeight.BOLD, 20));
-        taskTitle.setTextFill(Color.web("#2D5016"));
-        
-        Label classInfo = new Label("Kelas: " + className);
-        classInfo.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        classInfo.setTextFill(Color.web("#666666"));
-        
-        Label teacherInfo = new Label("Pengajar: " + teacher);
-        teacherInfo.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        teacherInfo.setTextFill(Color.web("#666666"));
-        
-        Label deadlineInfo = new Label("Deadline: " + deadline);
-        deadlineInfo.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        deadlineInfo.setTextFill(Color.web("#666666"));
-        
-        Label description = new Label("Deskripsi: Kerjakan soal-soal yang telah diberikan dengan lengkap dan benar. " +
-                                    "Sertakan langkah-langkah penyelesaian yang jelas dan rapi.");
-        description.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        description.setTextFill(Color.web("#333333"));
-        description.setWrapText(true);
-        
-        taskDetails.getChildren().addAll(taskTitle, classInfo, teacherInfo, deadlineInfo, description);
-        
-        // Tab pane for files and group members
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        
-        // Files tab
-        Tab filesTab = new Tab("File Submission");
-        VBox filesContent = createFilesTabContent();
-        filesTab.setContent(filesContent);
-        
-        tabPane.getTabs().add(filesTab);
-        
-        // Group members tab (if group task)
-        if (isGroupTask) {
-            Tab groupTab = new Tab("Anggota Kelompok");
-            VBox groupContent = createGroupTabContent();
-            groupTab.setContent(groupContent);
-            tabPane.getTabs().add(groupTab);
-        }
-        
-        dialogContent.getChildren().addAll(header, taskDetails, tabPane);
-        
-        Scene dialogScene = new Scene(dialogContent, 600, 500);
-        dialog.setScene(dialogScene);
-        dialog.showAndWait();
-    }
-    
-    private VBox createFilesTabContent() {
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(20));
-        
-        // Upload area
-        VBox uploadArea = new VBox(10);
-        uploadArea.setAlignment(Pos.CENTER);
-        uploadArea.setPadding(new Insets(30));
-        uploadArea.setStyle("-fx-background-color: #F8F9FA; " +
-                           "-fx-border-color: #DEE2E6; " +
-                           "-fx-border-width: 2; " +
-                           "-fx-border-style: dashed; " +
-                           "-fx-border-radius: 10; " +
-                           "-fx-background-radius: 10;");
-        
-        Label uploadIcon = new Label("📁");
-        uploadIcon.setFont(Font.font(32));
-        
-        Label uploadText = new Label("Klik untuk mengunggah file atau drag & drop");
-        uploadText.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        uploadText.setTextFill(Color.web("#666666"));
-        
-        Button uploadBtn = new Button("Pilih File");
-        uploadBtn.setStyle("-fx-background-color: #4CAF50; " +
-                          "-fx-text-fill: white; " +
-                          "-fx-font-weight: bold; " +
-                          "-fx-background-radius: 8; " +
-                          "-fx-cursor: hand; " +
-                          "-fx-padding: 10 20;");
-        
-        uploadBtn.setOnAction(e -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Pilih File Tugas");
-            fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("All Files", "*.*"),
-                new FileChooser.ExtensionFilter("PDF Files", "*.pdf"),
-                new FileChooser.ExtensionFilter("Word Documents", "*.docx", "*.doc"),
-                new FileChooser.ExtensionFilter("Excel Files", "*.xlsx", "*.xls")
-            );
-            
-            List<File> files = fileChooser.showOpenMultipleDialog(stage);
-            if (files != null) {
-                // Add files to upload list
-                for (File file : files) {
-                    System.out.println("Selected file: " + file.getName());
-                }
-            }
-        });
-        
-        uploadArea.getChildren().addAll(uploadIcon, uploadText, uploadBtn);
-        
-        // Uploaded files list
-        VBox filesList = new VBox(10);
-        Label filesLabel = new Label("File yang Diunggah:");
-        filesLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        filesLabel.setTextFill(Color.web("#2D5016"));
-        
-        // Sample uploaded files
-        HBox file1 = createFileItem("Tugas_Matematika_John.pdf", "2.3 MB");
-        HBox file2 = createFileItem("Lampiran_Soal.docx", "1.8 MB");
-        
-        filesList.getChildren().addAll(filesLabel, file1, file2);
-        
-        content.getChildren().addAll(uploadArea, filesList);
-        
-        return content;
-    }
-    
-    private HBox createFileItem(String fileName, String fileSize) {
-        HBox fileItem = new HBox(10);
-        fileItem.setAlignment(Pos.CENTER_LEFT);
-        fileItem.setPadding(new Insets(10));
-        fileItem.setStyle("-fx-background-color: white; " +
-                         "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                         "-fx-border-radius: 8; " +
-                         "-fx-background-radius: 8;");
-        
-        Label fileIcon = new Label("📄");
-        fileIcon.setFont(Font.font(16));
-        
-        VBox fileInfo = new VBox(2);
-        Label nameLabel = new Label(fileName);
-        nameLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-        nameLabel.setTextFill(Color.web("#333333"));
-        
-        Label sizeLabel = new Label(fileSize);
-        sizeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
-        sizeLabel.setTextFill(Color.web("#888888"));
-        
-        fileInfo.getChildren().addAll(nameLabel, sizeLabel);
-        
-        Button removeBtn = new Button("✕");
-        removeBtn.setStyle("-fx-background-color: #F44336; " +
-                          "-fx-text-fill: white; " +
-                          "-fx-font-size: 12px; " +
-                          "-fx-cursor: hand; " +
-                          "-fx-background-radius: 15; " +
-                          "-fx-min-width: 30; " +
-                          "-fx-min-height: 30;");
-        
-        fileItem.getChildren().addAll(fileIcon, fileInfo, removeBtn);
-        HBox.setHgrow(fileInfo, Priority.ALWAYS);
-        
-        return fileItem;
-    }
-    
-    private VBox createGroupTabContent() {
-        VBox content = new VBox(15);
-        content.setPadding(new Insets(20));
-        
-        Label groupLabel = new Label("Anggota Kelompok 3:");
-        groupLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        groupLabel.setTextFill(Color.web("#2D5016"));
-        
-        // Group members list
-        VBox membersList = new VBox(10);
-        
-        HBox member1 = createMemberItem("John Doe", "Leader", true);
-        HBox member2 = createMemberItem("Jane Smith", "Member", false);
-        HBox member3 = createMemberItem("Mike Johnson", "Member", false);
-        HBox member4 = createMemberItem("Sarah Wilson", "Member", false);
-        
-        membersList.getChildren().addAll(member1, member2, member3, member4);
-        
-        content.getChildren().addAll(groupLabel, membersList);
-        
-        return content;
-    }
-    
-    private HBox createMemberItem(String name, String role, boolean isCurrentUser) {
-        HBox memberItem = new HBox(15);
-        memberItem.setAlignment(Pos.CENTER_LEFT);
-        memberItem.setPadding(new Insets(10));
-        memberItem.setStyle("-fx-background-color: " + (isCurrentUser ? "#E8F5E9" : "white") + "; " +
-                           "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                           "-fx-border-radius: 8; " +
-                           "-fx-background-radius: 8;");
-        
-        Label avatar = new Label("👤");
-        avatar.setFont(Font.font(20));
-        
-        VBox memberInfo = new VBox(2);
-        Label nameLabel = new Label(name + (isCurrentUser ? " (You)" : ""));
-        nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        nameLabel.setTextFill(Color.web("#2D5016"));
-        
-        Label roleLabel = new Label(role);
-        roleLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
-        roleLabel.setTextFill(Color.web("#666666"));
-        
-        memberInfo.getChildren().addAll(nameLabel, roleLabel);
-        
-        memberItem.getChildren().addAll(avatar, memberInfo);
-        HBox.setHgrow(memberInfo, Priority.ALWAYS);
-        
-        return memberItem;
     }
     
     public void show() {

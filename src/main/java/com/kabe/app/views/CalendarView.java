@@ -10,6 +10,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
@@ -22,6 +23,7 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.*;
+import javafx.util.Duration;
 
 public class CalendarView {
     private Stage stage;
@@ -619,12 +621,11 @@ public class CalendarView {
     }
     
     private void showTaskTooltip(Button dayButton, LocalDate date) {
-        if (currentTooltip != null) {
-            currentTooltip.hide();
-        }
-        
         List<TaskInfo> tasks = tasksByDate.get(date);
-        if (tasks == null || tasks.isEmpty()) return;
+        if (tasks == null || tasks.isEmpty()) {
+            dayButton.setTooltip(null);
+            return;
+        }
         
         StringBuilder tooltipText = new StringBuilder();
         tooltipText.append("Tugas pada ").append(date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"))).append(":\n\n");
@@ -634,13 +635,19 @@ public class CalendarView {
             tooltipText.append("  ").append(task.getClassName()).append(" - ").append(task.getTeacher()).append("\n\n");
         }
         
-        currentTooltip = new Tooltip(tooltipText.toString());
-        currentTooltip.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8); " +
-                               "-fx-text-fill: white; " +
-                               "-fx-padding: 10; " +
-                               "-fx-background-radius: 5; " +
-                               "-fx-font-size: 12;");
-        currentTooltip.show(dayButton, 0, 0);
+        Tooltip tooltip = new Tooltip(tooltipText.toString());
+        tooltip.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8); " +
+                        "-fx-text-fill: white; " +
+                        "-fx-padding: 10; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-font-size: 12;");
+        
+        // Mengatur delay dan durasi tooltip
+        tooltip.setShowDelay(Duration.millis(100));
+        tooltip.setHideDelay(Duration.millis(200));
+        
+        // Tooltip akan otomatis muncul di dekat mouse
+        dayButton.setTooltip(tooltip);
     }
     
     private void showTaskDetailsPopup(LocalDate date) {
@@ -661,12 +668,29 @@ public class CalendarView {
         popupContent.setPadding(new Insets(30));
         popupContent.setAlignment(Pos.CENTER);
         popupContent.setStyle("-fx-background-color: white; " +
-                             "-fx-background-radius: 20; " +
-                             "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                             "-fx-border-width: 1; " +
-                             "-fx-border-radius: 20;");
-        popupContent.setEffect(new DropShadow(20, Color.web("#000000")));
-        popupContent.setMaxWidth(600);
+                            "-fx-background-radius: 20; " +
+                            "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                            "-fx-border-width: 1; " +
+                            "-fx-border-radius: 20;");
+        
+        // Set ukuran berdasarkan persentase dari stage
+        popupContent.setPrefWidth(600);
+        popupContent.setMinWidth(400);
+        popupContent.setMaxWidth(700);
+        
+        // Tinggi disesuaikan dengan jumlah task
+        int contentHeight = Math.min(500, 200 + (tasks.size() * 80));
+        popupContent.setPrefHeight(contentHeight);
+        popupContent.setMaxHeight(contentHeight);
+        
+        // Improved drop shadow
+        DropShadow dropShadow = new DropShadow();
+        dropShadow.setRadius(25);
+        dropShadow.setOffsetX(0);
+        dropShadow.setOffsetY(5);
+        dropShadow.setColor(Color.rgb(0, 0, 0, 0.2));
+        dropShadow.setSpread(0.1);
+        popupContent.setEffect(dropShadow);
         
         // Header
         HBox header = new HBox(15);
@@ -704,20 +728,35 @@ public class CalendarView {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: transparent; " +
-                           "-fx-background: transparent;");
-        scrollPane.setMaxHeight(400);
+                        "-fx-background: transparent;");
         
         popupContent.getChildren().addAll(header, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
         
         // Create scene with transparent background
+        // Create scene with dynamic sizing
         StackPane popupRoot = new StackPane();
-        popupRoot.setStyle("-fx-background-color: rgba(0, 0, 0, 0.5);");
-        popupRoot.getChildren().add(popupContent);
+        popupRoot.setStyle("-fx-background-color: transparent;");
         
-        Scene popupScene = new Scene(popupRoot, 800, 600);
+        // Calculate dynamic size based on content
+        double sceneWidth = popupContent.getPrefWidth() + 100; // Extra space for padding
+        double sceneHeight = popupContent.getPrefHeight() + 100;
+        
+        // Create overlay dengan ukuran dinamis
+        Rectangle overlay = new Rectangle(0, 0);
+        overlay.setFill(Color.rgb(0, 0, 0, 0.4));
+        overlay.setArcWidth(0);
+        overlay.setArcHeight(0);
+        
+        popupRoot.getChildren().addAll(overlay, popupContent);
+        
+        // Center the popup content
+        StackPane.setAlignment(popupContent, Pos.CENTER);
+        
+        Scene popupScene = new Scene(popupRoot, sceneWidth, sceneHeight);
         popupScene.setFill(Color.TRANSPARENT);
         popup.setScene(popupScene);
-        
+            
         // Close popup when clicking outside
         popupRoot.setOnMouseClicked(e -> {
             if (e.getTarget() == popupRoot) {
@@ -729,6 +768,7 @@ public class CalendarView {
         popup.setOnCloseRequest(e -> root.setEffect(null));
         popup.show();
     }
+
     
     private VBox createTaskCard(TaskInfo task) {
         VBox card = new VBox(10);
