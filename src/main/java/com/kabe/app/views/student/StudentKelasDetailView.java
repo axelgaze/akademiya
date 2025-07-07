@@ -518,7 +518,7 @@ public class StudentKelasDetailView implements ViewInterface {
             });
         });
         
-        item.getChildren().addAll(iconContainer, infoBox, deleteBtn);
+        item.getChildren().addAll(iconContainer, infoBox);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
         
         // Hover effect

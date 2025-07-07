@@ -5,6 +5,8 @@ import com.kabe.app.models.Kelas;
 import com.kabe.app.models.User;
 import com.kabe.app.views.interfaces.ViewInterface;
 import com.kabe.app.models.PemberitahuanKelas;
+import com.kabe.app.controllers.UserController;
+import com.kabe.app.models.Material;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,11 +19,17 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.time.Duration;
-
+import java.sql.Timestamp;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class TeacherKelasDetailView implements ViewInterface {
@@ -32,15 +40,18 @@ public class TeacherKelasDetailView implements ViewInterface {
     private Kelas kelasData;
     private NavigationHandler navigationHandler;
     private KelasController kelasController;
+    private UserController userController;
+    private File selectedFile;
 
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
 
-    public TeacherKelasDetailView(Stage stage, Kelas kelasData, KelasController kelasController) {
+    public TeacherKelasDetailView(Stage stage, Kelas kelasData, KelasController kelasController, UserController userController) {
         this.stage = stage;
         this.kelasData = kelasData;
         this.kelasController = kelasController;
+        this.userController = userController;
         initializeView();
     }
 
@@ -296,6 +307,7 @@ public class TeacherKelasDetailView implements ViewInterface {
     }
 
     private VBox createMateriContent() {
+        VBox materiList = new VBox(10);
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
         
@@ -308,15 +320,89 @@ public class TeacherKelasDetailView implements ViewInterface {
         headerLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         headerLabel.setTextFill(Color.web("#4A148C"));
         
-        Button addMateriBtn = new Button("+ Tambah Materi");
-        addMateriBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        addMateriBtn.setStyle("-fx-background-color: #673AB7; " +
-                             "-fx-background-radius: 6; " +
-                             "-fx-text-fill: white; " +
-                             "-fx-cursor: hand; " +
-                             "-fx-padding: 8 15 8 15;");
+        // File upload components
+        HBox uploadContainer = new HBox(10);
+        uploadContainer.setAlignment(Pos.CENTER_LEFT);
         
-        header.getChildren().addAll(headerLabel, addMateriBtn);
+        // File path label
+        Label fileLabel = new Label("Belum ada file dipilih");
+        fileLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        fileLabel.setTextFill(Color.web("#666666"));
+        
+        // File chooser button
+        Button chooseFileBtn = new Button("Pilih File");
+        chooseFileBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        chooseFileBtn.setStyle("-fx-background-color: #673AB7; " +
+                            "-fx-background-radius: 6; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-cursor: hand; " +
+                            "-fx-padding: 8 15 8 15;");
+        
+        // Upload button
+        Button uploadBtn = new Button("Upload");
+        uploadBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        uploadBtn.setStyle("-fx-background-color: #4CAF50; " +
+                        "-fx-background-radius: 6; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 8 15 8 15;");
+        uploadBtn.setDisable(true); // Disabled until file is selected
+        
+        // File chooser
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Pilih File Materi");
+        fileChooser.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("All Files", "*.*"),
+            new FileChooser.ExtensionFilter("PDF", "*.pdf"),
+            new FileChooser.ExtensionFilter("PPT", "*.ppt", "*.pptx"),
+            new FileChooser.ExtensionFilter("Word", "*.doc", "*.docx"),
+            new FileChooser.ExtensionFilter("Video", "*.mp4", "*.mov"),
+            new FileChooser.ExtensionFilter("Image", "*.png", "*.jpg", "*.jpeg")
+        );
+        
+        chooseFileBtn.setOnAction(e -> {
+            selectedFile = fileChooser.showOpenDialog(stage);
+            if (selectedFile != null) {
+                fileLabel.setText(selectedFile.getName());
+                uploadBtn.setDisable(false);
+            }
+        });
+        
+        uploadBtn.setOnAction(e -> {
+            String fileName = fileLabel.getText();
+            if (!fileName.equals("Belum ada file dipilih")) {
+                // Dapatkan user_id dari session atau dari mana pun Anda menyimpannya
+                int uploaderId = userController.getUser().getId(); // Anda perlu implementasi method ini
+                
+                boolean success = kelasController.uploadMateri(kelasData.getId(), selectedFile, uploaderId);
+                
+                if (success) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Upload Berhasil");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Materi " + fileName + " berhasil diupload!");
+                    alert.showAndWait();
+                    
+                    // Reset form
+                    fileLabel.setText("Belum ada file dipilih");
+                    uploadBtn.setDisable(true);
+                    
+                    // Refresh daftar materi (Anda perlu implementasi ini)
+                    refreshMateriList(materiList);
+                    
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Upload Gagal");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Gagal mengupload materi " + fileName);
+                    alert.showAndWait();
+                }
+            }
+        });
+        
+        uploadContainer.getChildren().addAll(chooseFileBtn, fileLabel, uploadBtn);
+        
+        header.getChildren().addAll(headerLabel, uploadContainer);
         HBox.setHgrow(headerLabel, Priority.ALWAYS);
         
         // Sample materials
@@ -325,16 +411,9 @@ public class TeacherKelasDetailView implements ViewInterface {
         materiScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         materiScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         materiScroll.setStyle("-fx-background-color: transparent; " +
-                             "-fx-background: transparent;");
+                            "-fx-background: transparent;");
         
-        VBox materiList = new VBox(10);
-        
-        HBox materi1 = createMateriItem("📄", "Pengantar Matematika Lanjutan", "Diposting 2 hari yang lalu", "PDF");
-        HBox materi2 = createMateriItem("📊", "Slide Presentasi Kalkulus", "Diposting 5 hari yang lalu", "PPTX");
-        HBox materi3 = createMateriItem("🎥", "Video Tutorial Integral", "Diposting 1 minggu yang lalu", "MP4");
-        HBox materi4 = createMateriItem("📝", "Latihan Soal Bab 1", "Diposting 1 minggu yang lalu", "DOCX");
-        
-        materiList.getChildren().addAll(materi1, materi2, materi3, materi4);
+        refreshMateriList(materiList);
         materiScroll.setContent(materiList);
         
         content.getChildren().addAll(header, materiScroll);
@@ -343,7 +422,100 @@ public class TeacherKelasDetailView implements ViewInterface {
         return content;
     }
 
-    private HBox createMateriItem(String icon, String title, String time, String type) {
+    private void refreshMateriList(VBox materiList) {
+        materiList.getChildren().clear();
+        
+        List<Material> materials = kelasController.getMaterialsForKelas(kelasData.getId());
+        
+        if (materials.isEmpty()) {
+            Label emptyLabel = new Label("Belum ada materi tersedia");
+            emptyLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+            emptyLabel.setTextFill(Color.web("#666666"));
+            materiList.getChildren().add(emptyLabel);
+            return;
+        }
+        
+        for (Material material : materials) {
+            HBox materiItem = createMateriItem(material);
+            
+            // Tambahkan event handler untuk download
+            materiItem.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2) { // Double click untuk download
+                    downloadMaterial(material.getId(), material.getFileName());
+                }
+            });
+            
+            materiList.getChildren().add(materiItem);
+        }
+    }
+
+    private String formatDate(Timestamp timestamp) {
+        // Implementasi format tanggal sesuai kebutuhan
+        return "pada " + timestamp.toLocalDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
+    }
+
+    private void downloadMaterial(int materialId, String fileName) {
+        byte[] fileData = kelasController.downloadMaterial(materialId);
+        
+        if (fileData != null) {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Simpan File");
+            fileChooser.setInitialFileName(fileName);
+            File file = fileChooser.showSaveDialog(stage);
+            
+            if (file != null) {
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(fileData);
+                    
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Download Berhasil");
+                    alert.setHeaderText(null);
+                    alert.setContentText("File berhasil disimpan di: " + file.getAbsolutePath());
+                    alert.showAndWait();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    showErrorAlert("Gagal menyimpan file");
+                }
+            }
+        } else {
+            showErrorAlert("Gagal mengunduh file");
+        }
+    }
+
+    private void showErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private String getFileIcon(String fileType) {
+        switch (fileType.toLowerCase()) {
+            case "pdf": return "📄";
+            case "doc":
+            case "docx": return "📝";
+            case "ppt":
+            case "pptx": return "📊";
+            case "xls":
+            case "xlsx": return "📈";
+            case "mp4":
+            case "mov":
+            case "avi": return "🎥";
+            case "jpg":
+            case "jpeg":
+            case "png": return "🖼️";
+            case "zip":
+            case "rar": return "🗄️";
+            default: return "📁";
+        }
+    }
+
+    private HBox createMateriItem(Material material) {
+        String icon = getFileIcon(material.getFileType());
+        String title = material.getFileName();
+        String time = "Diposting " + formatDate(material.getCreatedAt());
+        String type = material.getFileType().toUpperCase();
         HBox item = new HBox(15);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
@@ -383,6 +555,8 @@ public class TeacherKelasDetailView implements ViewInterface {
                            "-fx-text-fill: #673AB7; " +
                            "-fx-cursor: hand; " +
                            "-fx-padding: 5;");
+
+        downloadBtn.setOnAction(e -> handleDownload(material));
         
         // Delete button (only for teacher)
         Button deleteBtn = new Button("✕");
@@ -409,6 +583,46 @@ public class TeacherKelasDetailView implements ViewInterface {
         });
         
         return item;
+    }
+
+    private void handleDownload(Material material) {
+        // Tampilkan dialog penyimpanan file
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Simpan File");
+        fileChooser.setInitialFileName(material.getFileName());
+        
+        // Set ekstensi default sesuai tipe file
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(
+            material.getFileType().toUpperCase() + " files", 
+            "*." + material.getFileType()
+        );
+        fileChooser.getExtensionFilters().add(extFilter);
+        
+        File file = fileChooser.showSaveDialog(stage);
+        
+        if (file != null) {
+            try {
+                // Ambil data dari controller
+                byte[] fileData = kelasController.downloadMaterial(material.getId());
+                
+                if (fileData != null && fileData.length > 0) {
+                    // Tulis ke file
+                    Files.write(file.toPath(), fileData);
+                    
+                    // Tampilkan notifikasi
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Download Berhasil");
+                    alert.setHeaderText(null);
+                    alert.setContentText("File berhasil disimpan di:\n" + file.getAbsolutePath());
+                    alert.showAndWait();
+                } else {
+                    showErrorAlert("File kosong atau tidak valid");
+                }
+            } catch (IOException ex) {
+                showErrorAlert("Gagal menyimpan file: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
     }
 
     private VBox createPemberitahuanContent() {

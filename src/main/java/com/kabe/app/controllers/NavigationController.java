@@ -114,7 +114,7 @@ public class NavigationController {
         if (userController.getUser().getRole().equals("siswa")) {
             kelasDetailView = new StudentKelasDetailView(primaryStage, selectedKelas, kelasController, userController);
         } else {
-            kelasDetailView = new TeacherKelasDetailView(primaryStage, selectedKelas, kelasController);
+            kelasDetailView = new TeacherKelasDetailView(primaryStage, selectedKelas, kelasController, userController);
         }
         
         kelasDetailView.show();

@@ -5,7 +5,6 @@ com\kabe\app\views\interfaces\ViewInterface$NavigationHandler.class
 com\kabe\app\views\student\StudentKelasDetailView.class
 com\kabe\app\views\teacher\TeacherKelasView.class
 com\kabe\app\dao\UserDAO.class
-com\kabe\app\models\LampiranSiswa.class
 com\kabe\app\dao\KelasDAO.class
 com\kabe\app\views\teacher\TeacherTaskDetailView.class
 com\kabe\app\controllers\KelasController.class
@@ -26,12 +25,9 @@ com\kabe\app\controllers\UserController.class
 com\kabe\app\models\Material.class
 com\kabe\app\models\User.class
 com\kabe\app\views\teacher\TeacherKelasDetailView.class
-com\kabe\app\models\Tugas.class
 com\kabe\app\views\student\CalendarView$TaskInfo.class
 com\kabe\app\views\student\ProfileView.class
 com\kabe\app\views\student\StudentKelasView.class
 com\kabe\app\views\teacher\TeacherTasksView.class
-com\kabe\app\models\MateriKelas.class
-com\kabe\app\models\TugasLampiran.class
 com\kabe\app\views\LoginView.class
 com\kabe\app\views\interfaces\KelasInterface$NavigationHandler.class

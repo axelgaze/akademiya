@@ -1,5 +1,4 @@
 package com.kabe.app.dao;
-import com.kabe.app.models.Material;
 
 import com.kabe.app.models.Kelas;
 import com.kabe.app.models.PemberitahuanKelas;
@@ -13,6 +12,7 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import com.kabe.app.models.Material;
 
 public class KelasDAO {
     private final DatabaseConnector dbConnector;
@@ -387,54 +387,50 @@ public class KelasDAO {
         return null;
     }
 
-    public boolean addMaterial(int kelasId, String title, String description, String fileName, 
-                          String fileType, byte[] fileData, int uploaderId) {
-        String sql = "INSERT INTO materials (kelas_id, title, description, file_name, " +
-                    "file_type, file_data, uploader_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public boolean uploadMateri(int kelasId, String fileName, String fileType, 
+                              byte[] fileData, int uploaderId) {
+        String sql = "INSERT INTO materials (kelas_id, file_name, file_type, file_data, uploader_id) " +
+                    "VALUES (?, ?, ?, ?, ?)";
         
         try (Connection conn = dbConnector.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setInt(1, kelasId);
-            pstmt.setString(2, title);
-            pstmt.setString(3, description);
-            pstmt.setString(4, fileName);
-            pstmt.setString(5, fileType);
-            pstmt.setBytes(6, fileData);
-            pstmt.setInt(7, uploaderId);
+            pstmt.setString(2, fileName);
+            pstmt.setString(3, fileType);
+            pstmt.setBytes(4, fileData);
+            pstmt.setInt(5, uploaderId);
             
-            return pstmt.executeUpdate() > 0;
+            int affectedRows = pstmt.executeUpdate();
+            return affectedRows > 0;
         } catch (SQLException e) {
-            System.err.println("Error adding material: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
-    public List<Material> getClassMaterials(int kelasId) {
+    public List<Material> getMaterialsByKelasId(int kelasId) {
         List<Material> materials = new ArrayList<>();
-        String sql = "SELECT id, title, description, file_name, file_type, uploader_id, created_at " +
-                    "FROM materials WHERE kelas_id = ? ORDER BY created_at DESC";
+        String sql = "SELECT id, file_name, file_type, uploader_id, created_at FROM materials WHERE kelas_id = ? ORDER BY created_at DESC";
         
         try (Connection conn = dbConnector.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setInt(1, kelasId);
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
-                Material material = new Material();
-                material.setId(rs.getInt("id"));
-                material.setKelasId(kelasId);
-                material.setTitle(rs.getString("title"));
-                material.setDescription(rs.getString("description"));
-                material.setFileName(rs.getString("file_name"));
-                material.setFileType(rs.getString("file_type"));
-                material.setUploaderId(rs.getInt("uploader_id"));
-                material.setCreatedTime(rs.getTimestamp("created_at").toLocalDateTime());
+                Material material = new Material(
+                    rs.getInt("id"),
+                    kelasId,
+                    rs.getString("file_name"),
+                    rs.getString("file_type"),
+                    null, // Tidak mengambil file_data untuk efisiensi
+                    rs.getInt("uploader_id"),
+                    rs.getTimestamp("created_at")
+                );
                 materials.add(material);
             }
         } catch (SQLException e) {
-            System.err.println("Error getting class materials: " + e.getMessage());
+            e.printStackTrace();
         }
         return materials;
     }
@@ -444,7 +440,6 @@ public class KelasDAO {
         
         try (Connection conn = dbConnector.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
             pstmt.setInt(1, materialId);
             ResultSet rs = pstmt.executeQuery();
             
@@ -452,41 +447,8 @@ public class KelasDAO {
                 return rs.getBytes("file_data");
             }
         } catch (SQLException e) {
-            System.err.println("Error downloading material: " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
-    }
-
-    public boolean deleteMaterial(int materialId) {
-        String sql = "DELETE FROM materials WHERE id = ?";
-        
-        try (Connection conn = dbConnector.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            
-            pstmt.setInt(1, materialId);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Error deleting material: " + e.getMessage());
-            return false;
-        }
-    }
-
-    public boolean leaveClass(int kelasId, int userId) {
-        // Hapus semua materi yang diupload oleh user ini di kelas tersebut (opsional)
-        
-        // Keluarkan user dari kelas
-        String sql = "DELETE FROM kelas_siswa WHERE idkelas = ? AND iduser = ?";
-        try (Connection conn = dbConnector.getConnection();
-            PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, kelasId);
-            pstmt.setInt(2, userId);
-            ResultSet rs = pstmt.executeQuery();
-
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            System.err.println("Error leaving class: " + e.getMessage());
-            return false;
-        }
     }
 }

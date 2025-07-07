@@ -4,9 +4,11 @@ import com.kabe.app.dao.KelasDAO;
 import com.kabe.app.models.Kelas;
 import com.kabe.app.models.PemberitahuanKelas;
 import com.kabe.app.models.User;
-import java.util.List;
-
 import com.kabe.app.models.Material;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.io.File;
 
 public class KelasController {
     private final KelasDAO kelasDAO;
@@ -90,52 +92,31 @@ public class KelasController {
         return kelasDAO.getKelasByKode(kode);
     }
 
-    public boolean addMaterial(int kelasId, String title, String description, 
-                         String fileName, String fileType, byte[] fileData, int uploaderId) {
-        // Validasi ukuran file (misal maksimal 10MB)
-        if (fileData.length > 10 * 1024 * 1024) {
-            System.err.println("File size exceeds maximum limit (10MB)");
+    public boolean uploadMateri(int kelasId, File file, int uploaderId) {
+        try {
+            // Baca file menjadi byte array
+            FileInputStream fis = new FileInputStream(file);
+            byte[] fileData = new byte[(int) file.length()];
+            fis.read(fileData);
+            fis.close();
+            
+            // Dapatkan nama file dan ekstensi
+            String fileName = file.getName();
+            String fileType = fileName.substring(fileName.lastIndexOf(".") + 1);
+            
+            // Upload ke database
+            return kelasDAO.uploadMateri(kelasId, fileName, fileType, fileData, uploaderId);
+        } catch (IOException e) {
+            e.printStackTrace();
             return false;
         }
-        
-        // Validasi tipe file yang diizinkan
-        if (!isValidFileType(fileType)) {
-            System.err.println("Invalid file type");
-            return false;
-        }
-        
-        return kelasDAO.addMaterial(kelasId, title, description, fileName, fileType, fileData, uploaderId);
     }
 
-    public List<Material> getClassMaterials(int kelasId) {
-        return kelasDAO.getClassMaterials(kelasId);
+    public List<Material> getMaterialsForKelas(int kelasId) {
+        return kelasDAO.getMaterialsByKelasId(kelasId);
     }
 
     public byte[] downloadMaterial(int materialId) {
-        // Catat aktivitas download (opsional)
-        // bisa ditambahkan logging ke tabel terpisah
-        
         return kelasDAO.downloadMaterial(materialId);
-    }
-
-    public boolean deleteMaterial(int materialId) {
-        return kelasDAO.deleteMaterial(materialId);
-    }
-
-    public boolean leaveClass(int kelasId, int userId) {
-        // Validasi apakah user benar-benar terdaftar di kelas tersebut
-        
-        return kelasDAO.leaveClass(kelasId, userId);
-    }
-
-    private boolean isValidFileType(String fileType) {
-        // Daftar tipe file yang diizinkan
-        String[] allowedTypes = {"pdf", "docx", "pptx", "jpg", "png", "mp4"};
-        for (String type : allowedTypes) {
-            if (fileType.equalsIgnoreCase(type)) {
-                return true;
-            }
-        }
-        return false;
     }
 }
