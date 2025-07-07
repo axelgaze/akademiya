@@ -1,7 +1,13 @@
 package com.kabe.app.views.student;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import com.kabe.app.controllers.KelasController;
 import com.kabe.app.models.Kelas;
+import com.kabe.app.models.PemberitahuanKelas;
 import com.kabe.app.models.User;
+import com.kabe.app.controllers.UserController;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -26,12 +32,14 @@ public class StudentKelasDetailView implements ViewInterface {
     private Kelas kelasData;
     private NavigationHandler navigationHandler;
     private KelasController kelasController;
+    private UserController userController;
 
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
 
-    public StudentKelasDetailView(Stage stage, Kelas kelasData, KelasController kelasController) {
+    public StudentKelasDetailView(Stage stage, Kelas kelasData, KelasController kelasController, UserController userController) {
+        this.userController = userController;
         this.kelasController = kelasController;
         this.stage = stage;
         this.kelasData = kelasData;
@@ -109,6 +117,48 @@ public class StudentKelasDetailView implements ViewInterface {
                 navigationHandler.handleNavigation("Kelas");
             }
         });
+
+        // Disband button
+        Button disbandButton = new Button("Keluar Kelas");
+        disbandButton.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        disbandButton.setStyle("-fx-background-color: #D32F2F; " +
+                             "-fx-background-radius: 8; " +
+                             "-fx-text-fill: white; " +
+                             "-fx-cursor: hand; " +
+                             "-fx-padding: 10 20 10 20;");
+        
+        disbandButton.setOnMouseEntered(e -> {
+            disbandButton.setStyle("-fx-background-color: #B71C1C; " +
+                                 "-fx-background-radius: 8; " +
+                                 "-fx-text-fill: white; " +
+                                 "-fx-cursor: hand; " +
+                                 "-fx-padding: 10 20 10 20;");
+        });
+        
+        disbandButton.setOnMouseExited(e -> {
+            disbandButton.setStyle("-fx-background-color: #D32F2F; " +
+                                 "-fx-background-radius: 8; " +
+                                 "-fx-text-fill: white; " +
+                                 "-fx-cursor: hand; " +
+                                 "-fx-padding: 10 20 10 20;");
+        });
+        
+        disbandButton.setOnAction(e -> {
+            // Add logic to disband the class
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Konfirmasi Keluar Kelas");
+            alert.setHeaderText("Keluar Kelas " + kelasData.getNama());
+            alert.setContentText("Apakah Anda yakin ingin keluar kelas ini? Tindakan ini tidak dapat dibatalkan.");
+            
+            alert.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    kelasController.removeStudentFromClass(kelasData.getId(), userController.getUser().getId());
+                    if (navigationHandler != null) {
+                        navigationHandler.handleNavigation("Kelas");
+                    }
+                }
+            });
+        });
         
         // Title section
         VBox titleSection = new VBox(5);
@@ -122,8 +172,11 @@ public class StudentKelasDetailView implements ViewInterface {
         headerSubtitle.setTextFill(Color.web("#4A7C26"));
         
         titleSection.getChildren().addAll(headerTitle, headerSubtitle);
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        header.getChildren().addAll(backButton, titleSection);
+        header.getChildren().addAll(backButton, titleSection, spacer, disbandButton);
         
         return header;
     }
@@ -265,7 +318,7 @@ public class StudentKelasDetailView implements ViewInterface {
                              "-fx-cursor: hand; " +
                              "-fx-padding: 8 15 8 15;");
         
-        header.getChildren().addAll(headerLabel, addMateriBtn);
+        header.getChildren().addAll(headerLabel);
         HBox.setHgrow(headerLabel, Priority.ALWAYS);
         
         // Sample materials
@@ -373,7 +426,7 @@ public class StudentKelasDetailView implements ViewInterface {
                            "-fx-cursor: hand; " +
                            "-fx-padding: 8 15 8 15;");
         
-        header.getChildren().addAll(headerLabel, addNotifBtn);
+        header.getChildren().addAll(headerLabel);
         HBox.setHgrow(headerLabel, Priority.ALWAYS);
         
         // Sample notifications
@@ -385,36 +438,45 @@ public class StudentKelasDetailView implements ViewInterface {
                            "-fx-background: transparent;");
         
         VBox notificationsList = new VBox(10);
+        refreshPemberitahuanList(notificationsList);
         
-        HBox notif1 = createNotificationItem("📢", "Kelas besok dipindah ke ruang 205", "1 jam yang lalu");
-        HBox notif2 = createNotificationItem("⚠️", "Ujian tengah semester akan dilaksanakan minggu depan", "3 jam yang lalu");
-        HBox notif3 = createNotificationItem("📚", "Materi baru telah diupload ke sistem", "1 hari yang lalu");
-        HBox notif4 = createNotificationItem("🎯", "Deadline tugas kelompok diperpanjang hingga Jumat", "2 hari yang lalu");
-        
-        notificationsList.getChildren().addAll(notif1, notif2, notif3, notif4);
         notifScroll.setContent(notificationsList);
         
         content.getChildren().addAll(header, notifScroll);
+        notifScroll.setContent(notificationsList);
+  
         VBox.setVgrow(notifScroll, Priority.ALWAYS);
         
         return content;
     }
 
-    private HBox createNotificationItem(String icon, String message, String time) {
+    private void refreshPemberitahuanList(VBox container) {
+        container.getChildren().clear();
+        
+        List<PemberitahuanKelas> pemberitahuanList = kelasController.getPemberitahuanKelas(kelasData.getId());
+        for (PemberitahuanKelas pemberitahuan : pemberitahuanList) {
+            String isiPemberitahuan = pemberitahuan.getIsi();
+            String waktuPemberitahuan = formatTimeAgo(pemberitahuan.getCreatedTime());
+            HBox notif = createNotificationItem("📢", isiPemberitahuan, waktuPemberitahuan, pemberitahuan.getId());
+            container.getChildren().add(notif);
+        }
+    }
+
+    private HBox createNotificationItem(String icon, String message, String time, int pemberitahuanId) {
         HBox item = new HBox(15);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
         item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.02); " +
-                     "-fx-background-radius: 8; " +
-                     "-fx-cursor: hand;");
+                    "-fx-background-radius: 8; " +
+                    "-fx-cursor: hand;");
         
         // Icon container
         VBox iconContainer = new VBox();
         iconContainer.setAlignment(Pos.CENTER);
         iconContainer.setPrefWidth(35);
         iconContainer.setPrefHeight(35);
-        iconContainer.setStyle("-fx-background-color: rgba(74, 124, 38, 0.1); " +
-                              "-fx-background-radius: 17;");
+        iconContainer.setStyle("-fx-background-color: rgba(103, 58, 183, 0.1); " +
+                            "-fx-background-radius: 17;");
         
         Label iconLabel = new Label(icon);
         iconLabel.setFont(Font.font(16));
@@ -434,31 +496,62 @@ public class StudentKelasDetailView implements ViewInterface {
         
         infoBox.getChildren().addAll(messageLabel, timeLabel);
         
-        // Options button
-        Button optionsBtn = new Button("⋮");
-        optionsBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        optionsBtn.setStyle("-fx-background-color: transparent; " +
-                          "-fx-text-fill: #888888; " +
-                          "-fx-cursor: hand; " +
-                          "-fx-padding: 5;");
+        // Delete button only
+        Button deleteBtn = new Button("Hapus");
+        deleteBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        deleteBtn.setStyle("-fx-background-color: transparent; " +
+                        "-fx-text-fill: #D32F2F; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 5;");
         
-        item.getChildren().addAll(iconContainer, infoBox, optionsBtn);
+        deleteBtn.setOnAction(e -> {
+            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+            confirm.setTitle("Konfirmasi Hapus");
+            confirm.setHeaderText("Hapus Pemberitahuan");
+            confirm.setContentText("Apakah Anda yakin ingin menghapus pemberitahuan ini?");
+            
+            confirm.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    kelasController.deletePemberitahuan(pemberitahuanId);
+                    refreshPemberitahuanList((VBox) item.getParent());
+                }
+            });
+        });
+        
+        item.getChildren().addAll(iconContainer, infoBox, deleteBtn);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
         
         // Hover effect
         item.setOnMouseEntered(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.05); " +
-                         "-fx-background-radius: 8; " +
-                         "-fx-cursor: hand;");
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand;");
         });
         
         item.setOnMouseExited(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.02); " +
-                         "-fx-background-radius: 8; " +
-                         "-fx-cursor: hand;");
+                        "-fx-background-radius: 8; " +
+                        "-fx-cursor: hand;");
         });
         
         return item;
+    }
+
+    public static String formatTimeAgo(LocalDateTime waktu) {
+        LocalDateTime sekarang = LocalDateTime.now();
+        Duration durasi = Duration.between(waktu, sekarang);
+
+        long hari = durasi.toDays();
+        long jam = durasi.toHours();
+        long menit = durasi.toMinutes();
+
+        if (hari > 1) {
+            return hari + " hari yang lalu";
+        } else if (jam > 1) {
+            return jam + " jam yang lalu";
+        } else {
+            return menit + " menit yang lalu";
+        }
     }
 
     public void show() {

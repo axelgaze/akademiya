@@ -18,6 +18,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.kabe.app.controllers.KelasController;
 import com.kabe.app.controllers.UserController;
 import com.kabe.app.views.interfaces.KelasInterface;
@@ -62,9 +65,32 @@ public class StudentKelasView implements KelasInterface {
     }
     
     private void initializeSampleData() {
+        // Mengambil kelas yang diikuti oleh siswa dari database
         kelasList.addAll(
-            kelasController.getClassesByTeacher(userController.getUser().getId())
+            kelasController.getClassesByUser(userController.getUser().getId())
         );
+
+        for (Kelas kelas : kelasList) {
+            kelas.setJumlahSiswa(kelasController.getStudentCount(userController.getUser().getId()));
+        }
+
+        for (Kelas kelas : kelasList) {
+            kelas.setNamaPengajar(userController.getUserById(kelas.getPengajarId()).getFullName());
+        }
+        
+        for (Kelas kelas : kelasList) {
+            List<User> daftarSiswaDatabase = kelasController.getStudentsByClass(kelas.getId());
+            List<User> daftarSiswa = new ArrayList<>();
+            for (User siswa : daftarSiswaDatabase) {
+                daftarSiswa.add(siswa);
+            }
+
+            kelas.setDaftarSiswa(daftarSiswa);
+        }
+
+        for (Kelas kelas : kelasList) {
+            kelas.setJumlahSiswa(kelasController.getStudentCount(kelas.getId())+1);
+        }
     }
     
     private void initializeView() {
@@ -280,35 +306,65 @@ public class StudentKelasView implements KelasInterface {
         VBox headerText = new VBox(5);
         headerText.getChildren().addAll(headerTitle, headerSubtitle);
 
-        Button createBtn = new Button("+ Gabung Kelas Baru");
-        createBtn.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        createBtn.setStyle("-fx-background-color: #9C27B0; " +
-                         "-fx-text-fill: white; " +
-                         "-fx-background-radius: 8; " +
-                         "-fx-padding: 10 20 10 20; " +
-                         "-fx-cursor: hand;");
-        createBtn.setOnMouseEntered(e -> {
-            createBtn.setStyle("-fx-background-color: #7B1FA2; " +
-                             "-fx-text-fill: white; " +
-                             "-fx-background-radius: 8; " +
-                             "-fx-padding: 10 20 10 20; " +
-                             "-fx-cursor: hand;");
+        // Ganti Button dengan HBox yang berisi TextField dan Button
+        HBox joinContainer = new HBox(5);
+        joinContainer.setAlignment(Pos.CENTER_RIGHT);
+        
+        TextField joinField = new TextField();
+        joinField.setPromptText("Masukkan kode kelas");
+        joinField.setPrefWidth(200);
+        joinField.setPrefHeight(40);
+        joinField.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+        joinField.setStyle("-fx-background-color: white; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                        "-fx-border-width: 1; " +
+                        "-fx-border-radius: 8; " +
+                        "-fx-padding: 5 10 5 10;");
+        
+        Button joinBtn = new Button("Gabung");
+        joinBtn.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        joinBtn.setStyle("-fx-background-color: #9C27B0; " +
+                    "-fx-text-fill: white; " +
+                    "-fx-background-radius: 8; " +
+                    "-fx-padding: 10 20 10 20; " +
+                    "-fx-cursor: hand;");
+        
+        joinBtn.setOnMouseEntered(e -> {
+            joinBtn.setStyle("-fx-background-color: #7B1FA2; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 10 20 10 20; " +
+                        "-fx-cursor: hand;");
         });
-        createBtn.setOnMouseExited(e -> {
-            createBtn.setStyle("-fx-background-color: #9C27B0; " +
-                             "-fx-text-fill: white; " +
-                             "-fx-background-radius: 8; " +
-                             "-fx-padding: 10 20 10 20; " +
-                             "-fx-cursor: hand;");
+        
+        joinBtn.setOnMouseExited(e -> {
+            joinBtn.setStyle("-fx-background-color: #9C27B0; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-padding: 10 20 10 20; " +
+                        "-fx-cursor: hand;");
         });
-        createBtn.setOnAction(e -> {
-            if (navigationHandler != null) {
-                navigationHandler.handleNavigation("GabungKelas");
+        
+        joinBtn.setOnAction(e -> {
+            String kodeKelas = joinField.getText().trim();
+            if (!kodeKelas.isEmpty()) {
+                kelasController.addStudentToClass(kelasController.getKelasByKode(kodeKelas).getId(), userController.getUser().getId());
+                System.out.println(kelasController.getKelasByKode(kodeKelas).getId());
+                joinField.clear();
+                if (navigationHandler != null) {
+                    navigationHandler.handleNavigation("Kelas");
+                }
             }
         });
         
+        // Tambahkan event handler untuk Enter key di TextField
+        joinField.setOnAction(e -> joinBtn.fire());
+        
+        joinContainer.getChildren().addAll(joinField, joinBtn);
+        
         HBox.setHgrow(headerText, Priority.ALWAYS);
-        header.getChildren().addAll(headerText, createBtn);
+        header.getChildren().addAll(headerText, joinContainer);
         
         return header;
     }
@@ -377,7 +433,7 @@ public class StudentKelasView implements KelasInterface {
         int maxColumns = 3;
         
         for (Kelas kelas : kelasList) {
-            VBox kelasCard = createKelasCard(kelasController.getKelasById(kelas.getId()));
+            VBox kelasCard = createKelasCard(kelas);
             kelasGrid.add(kelasCard, column, row);
             
             column++;

@@ -6,6 +6,8 @@ import com.kabe.app.models.PemberitahuanKelas;
 import com.kabe.app.models.User;
 import java.util.List;
 
+import com.kabe.app.models.Material;
+
 public class KelasController {
     private final KelasDAO kelasDAO;
 
@@ -78,5 +80,62 @@ public class KelasController {
 
     public boolean deletePemberitahuan(int pemberitahuanId) {
         return kelasDAO.deletePemberitahuan(pemberitahuanId);
+    }
+
+    public List<Kelas> getClassesByUser(int siswaid) {
+        return kelasDAO.getClassesByUser(siswaid);
+    }
+
+    public Kelas getKelasByKode(String kode) {
+        return kelasDAO.getKelasByKode(kode);
+    }
+
+    public boolean addMaterial(int kelasId, String title, String description, 
+                         String fileName, String fileType, byte[] fileData, int uploaderId) {
+        // Validasi ukuran file (misal maksimal 10MB)
+        if (fileData.length > 10 * 1024 * 1024) {
+            System.err.println("File size exceeds maximum limit (10MB)");
+            return false;
+        }
+        
+        // Validasi tipe file yang diizinkan
+        if (!isValidFileType(fileType)) {
+            System.err.println("Invalid file type");
+            return false;
+        }
+        
+        return kelasDAO.addMaterial(kelasId, title, description, fileName, fileType, fileData, uploaderId);
+    }
+
+    public List<Material> getClassMaterials(int kelasId) {
+        return kelasDAO.getClassMaterials(kelasId);
+    }
+
+    public byte[] downloadMaterial(int materialId) {
+        // Catat aktivitas download (opsional)
+        // bisa ditambahkan logging ke tabel terpisah
+        
+        return kelasDAO.downloadMaterial(materialId);
+    }
+
+    public boolean deleteMaterial(int materialId) {
+        return kelasDAO.deleteMaterial(materialId);
+    }
+
+    public boolean leaveClass(int kelasId, int userId) {
+        // Validasi apakah user benar-benar terdaftar di kelas tersebut
+        
+        return kelasDAO.leaveClass(kelasId, userId);
+    }
+
+    private boolean isValidFileType(String fileType) {
+        // Daftar tipe file yang diizinkan
+        String[] allowedTypes = {"pdf", "docx", "pptx", "jpg", "png", "mp4"};
+        for (String type : allowedTypes) {
+            if (fileType.equalsIgnoreCase(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

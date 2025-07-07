@@ -1,4 +1,5 @@
 package com.kabe.app.dao;
+import com.kabe.app.models.Material;
 
 import com.kabe.app.models.Kelas;
 import com.kabe.app.models.PemberitahuanKelas;
@@ -81,13 +82,14 @@ public class KelasDAO {
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return new Kelas(
-                    rs.getInt("id"),
-                    rs.getString("nama"),
-                    rs.getString("kode"),
-                    rs.getString("deskripsi"),
-                    rs.getTimestamp("created_at").toLocalDateTime()
-                );
+                Kelas kelas = new Kelas();
+                kelas.setId(rs.getInt("id"));
+                kelas.setNama(rs.getString("nama"));
+                kelas.setKode(rs.getString("kode"));
+                kelas.setDeskripsi(rs.getString("deskripsi"));
+                kelas.setPengajarId(rs.getInt("pengajar_id"));
+                kelas.setCreatedTime(rs.getTimestamp("created_at").toLocalDateTime());
+                return kelas;
             }
         } catch (SQLException e) {
             System.err.println("Error getting class: " + e.getMessage());
@@ -273,6 +275,36 @@ public class KelasDAO {
         }
     }
 
+    public List<Kelas> getClassesByUser(int userId) {
+        List<Kelas> kelasList = new ArrayList<>();
+        String sql = "SELECT k.id, k.nama, k.kode, k.deskripsi, k.created_at, k.pengajar_id " +
+                    "FROM kelas k " +
+                    "JOIN kelas_siswa ks ON k.id = ks.idkelas " +
+                    "WHERE ks.iduser = ?";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                Kelas kelas = new Kelas(
+                    rs.getInt("id"),
+                    rs.getString("nama"),
+                    rs.getString("kode"),
+                    rs.getString("deskripsi"),
+                    rs.getTimestamp("created_at").toLocalDateTime(),
+                    rs.getInt("pengajar_id")
+                );
+                kelasList.add(kelas);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting classes by user: " + e.getMessage());
+        }
+        return kelasList;
+    }
+
     public boolean addPemberitahuan(int kelasId, String isi) {
         String sql = "INSERT INTO pemberitahuankelas (kelasId, isi) VALUES (?, ?)";
         
@@ -290,7 +322,7 @@ public class KelasDAO {
 
     public List<PemberitahuanKelas> getPemberitahuanByKelas(int kelasId) {
         List<PemberitahuanKelas> pemberitahuanList = new ArrayList<>();
-        String sql = "SELECT * FROM pemberitahuankelas WHERE kelasId = ?";
+        String sql = "SELECT * FROM pemberitahuankelas WHERE kelasId = ? ORDER BY created_time DESC;";
 
         try (Connection conn = dbConnector.getConnection();
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -323,6 +355,137 @@ public class KelasDAO {
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
             System.err.println("Error removing pemberitahuan from class: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public Kelas getKelasByKode(String kode) {
+        String sql = "SELECT * FROM kelas WHERE kode = ?";
+
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, kode);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Kelas kelas = new Kelas();
+                kelas.setId(rs.getInt("id"));
+                kelas.setNama(rs.getString("nama"));
+                kelas.setKode(rs.getString("kode"));
+                kelas.setDeskripsi(rs.getString("deskripsi"));
+                kelas.setCreatedTime(rs.getTimestamp("created_at").toLocalDateTime());
+                return kelas;
+            }
+
+            
+
+        } catch (SQLException e) {
+            System.err.println("Error getting class by kode: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    public boolean addMaterial(int kelasId, String title, String description, String fileName, 
+                          String fileType, byte[] fileData, int uploaderId) {
+        String sql = "INSERT INTO materials (kelas_id, title, description, file_name, " +
+                    "file_type, file_data, uploader_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, kelasId);
+            pstmt.setString(2, title);
+            pstmt.setString(3, description);
+            pstmt.setString(4, fileName);
+            pstmt.setString(5, fileType);
+            pstmt.setBytes(6, fileData);
+            pstmt.setInt(7, uploaderId);
+            
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error adding material: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Material> getClassMaterials(int kelasId) {
+        List<Material> materials = new ArrayList<>();
+        String sql = "SELECT id, title, description, file_name, file_type, uploader_id, created_at " +
+                    "FROM materials WHERE kelas_id = ? ORDER BY created_at DESC";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, kelasId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                Material material = new Material();
+                material.setId(rs.getInt("id"));
+                material.setKelasId(kelasId);
+                material.setTitle(rs.getString("title"));
+                material.setDescription(rs.getString("description"));
+                material.setFileName(rs.getString("file_name"));
+                material.setFileType(rs.getString("file_type"));
+                material.setUploaderId(rs.getInt("uploader_id"));
+                material.setCreatedTime(rs.getTimestamp("created_at").toLocalDateTime());
+                materials.add(material);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting class materials: " + e.getMessage());
+        }
+        return materials;
+    }
+
+    public byte[] downloadMaterial(int materialId) {
+        String sql = "SELECT file_data FROM materials WHERE id = ?";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, materialId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getBytes("file_data");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error downloading material: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean deleteMaterial(int materialId) {
+        String sql = "DELETE FROM materials WHERE id = ?";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, materialId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting material: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean leaveClass(int kelasId, int userId) {
+        // Hapus semua materi yang diupload oleh user ini di kelas tersebut (opsional)
+        
+        // Keluarkan user dari kelas
+        String sql = "DELETE FROM kelas_siswa WHERE idkelas = ? AND iduser = ?";
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, kelasId);
+            pstmt.setInt(2, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Error leaving class: " + e.getMessage());
             return false;
         }
     }

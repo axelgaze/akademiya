@@ -22,6 +22,7 @@ public class Kelas {
         }
     
         public Kelas(int id, String nama, String kode, String deskripsi, LocalDateTime created_time) {
+            this.id = id;
             this.nama = nama;
             this.kode = kode;
             this.deskripsi = deskripsi;
@@ -29,6 +30,18 @@ public class Kelas {
             this.daftarSiswa = new ArrayList<>();
             this.pemberitahuanKelas = new ArrayList<>();
             this.jumlahSiswa = 0;
+        }
+
+        public Kelas(int id, String nama, String kode, String deskripsi, LocalDateTime created_time, int pengajarId) {
+            this.id = id;
+            this.nama = nama;
+            this.kode = kode;
+            this.deskripsi = deskripsi;
+            this.created_time = created_time;
+            this.daftarSiswa = new ArrayList<>();
+            this.pemberitahuanKelas = new ArrayList<>();
+            this.jumlahSiswa = 0;
+            this.pengajarId = pengajarId;
         }
         
         // Getters
@@ -41,6 +54,7 @@ public class Kelas {
         public List<User> getDaftarSiswa() { return daftarSiswa; }
         public String getNamaPengajar() { return namaPengajar; }
         public List<PemberitahuanKelas> getPemberitahuanKelas() {return pemberitahuanKelas;}
+        public LocalDateTime getCreatedTime() { return created_time; }
         
         // Setters
         public void setId(int id) { this.id = id; }
@@ -52,4 +66,7 @@ public class Kelas {
         public void setDaftarSiswa(List<User> daftarSiswa) { this.daftarSiswa = daftarSiswa; }
         public void setNamaPengajar(String namaPengajar) { this.namaPengajar = namaPengajar; }
         public void setPemberitahuanKelas(List<PemberitahuanKelas> pemberitahuanKelas) { this.pemberitahuanKelas = pemberitahuanKelas;}
+        public void setCreatedTime(LocalDateTime created_time) {
+            this.created_time = created_time;
+        }
     }

@@ -99,7 +99,7 @@ public class NavigationController {
             if ("KelasDetail".equals(viewName)) {
                 KelasController kelasController = kelasView.getKelasController();
                 Kelas selectedKelas = kelasView.getSelectedKelas();
-                showDetailKelasView(selectedKelas, kelasController);
+                showDetailKelasView(selectedKelas, userController, kelasController);
             } else if ("CreateClass".equals(viewName)) {
                 KelasController kelasController = kelasView.getKelasController();
                 showBuatKelasView(kelasController, userController);
@@ -109,10 +109,10 @@ public class NavigationController {
         });
     }
     
-    public void showDetailKelasView(Kelas selectedKelas, KelasController kelasController) {
+    public void showDetailKelasView(Kelas selectedKelas, UserController userController, KelasController kelasController) {
         ViewInterface kelasDetailView;
         if (userController.getUser().getRole().equals("siswa")) {
-            kelasDetailView = new StudentKelasDetailView(primaryStage, selectedKelas, kelasController);
+            kelasDetailView = new StudentKelasDetailView(primaryStage, selectedKelas, kelasController, userController);
         } else {
             kelasDetailView = new TeacherKelasDetailView(primaryStage, selectedKelas, kelasController);
         }

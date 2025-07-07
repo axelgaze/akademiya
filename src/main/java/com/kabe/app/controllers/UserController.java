@@ -60,4 +60,8 @@ public class UserController {
     public User getUser() {
         return user;
     }
+
+    public User getUserById(int id) {
+        return userDAO.getUserById(id);
+    }
 }
