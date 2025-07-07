@@ -6,8 +6,10 @@ import java.util.List;
 import com.kabe.app.controllers.KelasController;
 import com.kabe.app.models.Kelas;
 import com.kabe.app.models.PemberitahuanKelas;
+import com.kabe.app.views.interfaces.ViewInterface;
 import com.kabe.app.models.User;
 import com.kabe.app.controllers.UserController;
+import com.kabe.app.models.Material;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,9 +22,19 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import com.kabe.app.views.interfaces.ViewInterface;
+
+import java.time.Duration;
+import java.sql.Timestamp;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class StudentKelasDetailView implements ViewInterface {
     private Stage stage;
@@ -33,6 +45,7 @@ public class StudentKelasDetailView implements ViewInterface {
     private NavigationHandler navigationHandler;
     private KelasController kelasController;
     private UserController userController;
+    private File selectedFile;
 
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
@@ -298,6 +311,7 @@ public class StudentKelasDetailView implements ViewInterface {
     }
 
     private VBox createMateriContent() {
+        VBox materiList = new VBox(10);
         VBox content = new VBox(15);
         content.setPadding(new Insets(20));
         
@@ -329,23 +343,110 @@ public class StudentKelasDetailView implements ViewInterface {
         materiScroll.setStyle("-fx-background-color: transparent; " +
                              "-fx-background: transparent;");
         
-        VBox materiList = new VBox(10);
-        
-        HBox materi1 = createMateriItem("📄", "Pengantar Matematika Lanjutan", "Diposting 2 hari yang lalu", "PDF");
-        HBox materi2 = createMateriItem("📊", "Slide Presentasi Kalkulus", "Diposting 5 hari yang lalu", "PPTX");
-        HBox materi3 = createMateriItem("🎥", "Video Tutorial Integral", "Diposting 1 minggu yang lalu", "MP4");
-        HBox materi4 = createMateriItem("📝", "Latihan Soal Bab 1", "Diposting 1 minggu yang lalu", "DOCX");
-        
-        materiList.getChildren().addAll(materi1, materi2, materi3, materi4);
+        materiList = new VBox(10);
+        refreshMateriList(materiList);
         materiScroll.setContent(materiList);
-        
+
         content.getChildren().addAll(header, materiScroll);
         VBox.setVgrow(materiScroll, Priority.ALWAYS);
         
         return content;
     }
 
-    private HBox createMateriItem(String icon, String title, String time, String type) {
+    private void refreshMateriList(VBox materiList) {
+        materiList.getChildren().clear();
+
+        List<Material> materials = kelasController.getMaterialsForKelas(kelasData.getId());
+
+        if (materials.isEmpty()) {
+            Label emptyLabel = new Label("Belum ada materi tersedia");
+            emptyLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+            emptyLabel.setTextFill(Color.web("#666666"));
+            materiList.getChildren().add(emptyLabel);
+            return;
+        }
+
+        for (Material material : materials) {
+            HBox materiItem = createMateriItem(material);
+
+            // Tambahkan event handler untuk download
+            materiItem.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2) {
+                    downloadMaterial(material.getId(), material.getFileName());
+                }
+            });
+
+            materiList.getChildren().add(materiItem);
+        }
+    }
+
+    private String formatDate(Timestamp timestamp) {
+        // Implementasi format tanggal sesuai kebutuhan
+        return "pada " + timestamp.toLocalDateTime().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"));
+    }
+
+    private void downloadMaterial(int materialId, String fileName) {
+        byte[] fileData = kelasController.downloadMaterial(materialId);
+        
+        if (fileData != null) {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Simpan File");
+            fileChooser.setInitialFileName(fileName);
+            File file = fileChooser.showSaveDialog(stage);
+            
+            if (file != null) {
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(fileData);
+                    
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Download Berhasil");
+                    alert.setHeaderText(null);
+                    alert.setContentText("File berhasil disimpan di: " + file.getAbsolutePath());
+                    alert.showAndWait();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    showErrorAlert("Gagal menyimpan file");
+                }
+            }
+        } else {
+            showErrorAlert("Gagal mengunduh file");
+        }
+    }
+
+    private void showErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private String getFileIcon(String fileType) {
+        switch (fileType.toLowerCase()) {
+            case "pdf": return "📄";
+            case "doc":
+            case "docx": return "📝";
+            case "ppt":
+            case "pptx": return "📊";
+            case "xls":
+            case "xlsx": return "📈";
+            case "mp4":
+            case "mov":
+            case "avi": return "🎥";
+            case "jpg":
+            case "jpeg":
+            case "png": return "🖼️";
+            case "zip":
+            case "rar": return "🗄️";
+            default: return "📁";
+        }
+    }
+
+    private HBox createMateriItem(Material material) {
+        String icon = getFileIcon(material.getFileType());
+        String title = material.getFileName();
+        String time = "Diposting " + formatDate(material.getCreatedAt());
+        String type = material.getFileType().toUpperCase();
         HBox item = new HBox(15);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
@@ -373,8 +474,8 @@ public class StudentKelasDetailView implements ViewInterface {
         // Type badge
         Label typeBadge = new Label(type);
         typeBadge.setFont(Font.font("Arial", FontWeight.BOLD, 10));
-        typeBadge.setTextFill(Color.web("#4A7C26"));
-        typeBadge.setStyle("-fx-background-color: rgba(74, 124, 38, 0.1); " +
+        typeBadge.setTextFill(Color.web("#673AB7"));
+        typeBadge.setStyle("-fx-background-color: rgba(103, 58, 183, 0.1); " +
                           "-fx-background-radius: 4; " +
                           "-fx-padding: 2 6 2 6;");
         
@@ -382,9 +483,11 @@ public class StudentKelasDetailView implements ViewInterface {
         Button downloadBtn = new Button("⬇");
         downloadBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
         downloadBtn.setStyle("-fx-background-color: transparent; " +
-                           "-fx-text-fill: #4A7C26; " +
+                           "-fx-text-fill: #673AB7; " +
                            "-fx-cursor: hand; " +
                            "-fx-padding: 5;");
+
+        downloadBtn.setOnAction(e -> handleDownload(material));
         
         item.getChildren().addAll(iconLabel, infoBox, typeBadge, downloadBtn);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
@@ -403,6 +506,46 @@ public class StudentKelasDetailView implements ViewInterface {
         });
         
         return item;
+    }
+
+    private void handleDownload(Material material) {
+        // Tampilkan dialog penyimpanan file
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Simpan File");
+        fileChooser.setInitialFileName(material.getFileName());
+        
+        // Set ekstensi default sesuai tipe file
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(
+            material.getFileType().toUpperCase() + " files", 
+            "*." + material.getFileType()
+        );
+        fileChooser.getExtensionFilters().add(extFilter);
+        
+        File file = fileChooser.showSaveDialog(stage);
+        
+        if (file != null) {
+            try {
+                // Ambil data dari controller
+                byte[] fileData = kelasController.downloadMaterial(material.getId());
+                
+                if (fileData != null && fileData.length > 0) {
+                    // Tulis ke file
+                    Files.write(file.toPath(), fileData);
+                    
+                    // Tampilkan notifikasi
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Download Berhasil");
+                    alert.setHeaderText(null);
+                    alert.setContentText("File berhasil disimpan di:\n" + file.getAbsolutePath());
+                    alert.showAndWait();
+                } else {
+                    showErrorAlert("File kosong atau tidak valid");
+                }
+            } catch (IOException ex) {
+                showErrorAlert("Gagal menyimpan file: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
     }
 
     private VBox createPemberitahuanContent() {
