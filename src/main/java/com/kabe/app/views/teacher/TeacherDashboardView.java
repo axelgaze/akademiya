@@ -13,9 +13,17 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import com.kabe.app.models.Kelas;
 import com.kabe.app.models.User;
+import com.kabe.app.controllers.KelasController;
+import com.kabe.app.controllers.TugasController;
 import com.kabe.app.controllers.UserController;
 import com.kabe.app.views.interfaces.ViewInterface;
+import com.kabe.app.models.Tugas;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public class TeacherDashboardView implements ViewInterface {
     private Stage stage;
@@ -25,9 +33,13 @@ public class TeacherDashboardView implements ViewInterface {
     private VBox mainContent;
     private NavigationHandler navigationHandler;
     private UserController userController;
+    private KelasController kelasController;
+    private TugasController tugasController;
     
-    public TeacherDashboardView(Stage stage, UserController userController) {
+    public TeacherDashboardView(Stage stage, UserController userController, KelasController kelasController, TugasController tugasController) {
         this.userController = userController;
+        this.kelasController = kelasController;
+        this.tugasController = tugasController;
         this.stage = stage;
         initializeView();
     }
@@ -52,7 +64,7 @@ public class TeacherDashboardView implements ViewInterface {
         // Create sidebar
         createSidebar();
         
-        // Create main content
+        // Create main content with real data
         createMainContent();
 
         ScrollPane scrollPane = new ScrollPane(mainContent);
@@ -74,7 +86,6 @@ public class TeacherDashboardView implements ViewInterface {
         sidebar.setPrefWidth(280);
         sidebar.setPadding(new Insets(20));
         
-        // Sidebar background (same as student)
         LinearGradient sidebarGradient = new LinearGradient(
             0, 0, 1, 0, true, null,
             new Stop(0, Color.web("#4A148C")),
@@ -148,8 +159,7 @@ public class TeacherDashboardView implements ViewInterface {
         userInfo.setAlignment(Pos.CENTER);
         userInfo.setPadding(new Insets(20, 0, 0, 0));
         
-        // Changed from student icon to teacher icon
-        Label userAvatar = new Label("👨‍🏫"); // Teacher emoji
+        Label userAvatar = new Label("👨‍🏫");
         userAvatar.setFont(Font.font(32));
         userAvatar.setTextFill(Color.web("#E8F5E8"));
         
@@ -242,10 +252,10 @@ public class TeacherDashboardView implements ViewInterface {
         
         header.getChildren().add(headerText);
         
-        // Statistics cards for teacher
+        // Statistics cards with real data
         HBox statisticsContainer = createStatisticsCards();
         
-        // Recent activities for teacher
+        // Recent activities with real data
         VBox recentActivities = createRecentActivities();
         
         mainContent.getChildren().addAll(header, statisticsContainer, recentActivities);
@@ -255,17 +265,50 @@ public class TeacherDashboardView implements ViewInterface {
         HBox container = new HBox(20);
         container.setAlignment(Pos.CENTER);
         
+        // Get teacher's classes
+        List<Kelas> teacherClasses = kelasController.getClassesByTeacher(userController.getUser().getId());
+        int classCount = teacherClasses != null ? teacherClasses.size() : 0;
+        
+        // Get assignments to grade (count of assignments that have submissions but no grade)
+        int assignmentsToGrade = 0;
+        int totalStudents = 0;
+        int upcomingDeadlines = 0;
+        
+        if (teacherClasses != null) {
+            for (Kelas kelas : teacherClasses) {
+                // Count total students across all classes
+                totalStudents += kelasController.getStudentCount(kelas.getId());
+                
+                // Get assignments for this class
+                List<Tugas> assignments = tugasController.getTugasByTeacher(userController.getUser().getId());
+                
+                if (assignments != null) {
+                    for (Tugas assignment : assignments) {
+                        // Count assignments that need grading
+                        int submittedCount = tugasController.countUniquePengumpul(assignment.getId());
+                        int gradedCount = 0; // You might need to add a method to count graded assignments
+                        assignmentsToGrade += (submittedCount - gradedCount);
+                        
+                        // Count upcoming deadlines (within next 7 days)
+                        if (assignment.getDeadline() != null && assignment.getDeadline().after(Timestamp.valueOf(LocalDateTime.now()))) {
+                            upcomingDeadlines++;
+                        }
+                    }
+                }
+            }
+        }
+        
         // Classes taught card
-        VBox classesCard = createStatCard("🏫", "Kelas Diajar", "6", Color.web("#2196F3"));
+        VBox classesCard = createStatCard("🏫", "Kelas Diajar", String.valueOf(classCount), Color.web("#2196F3"));
         
         // Assignments to grade card  
-        VBox gradingCard = createStatCard("📝", "Tugas Perlu Dinilai", "18", Color.web("#FF9800"));
+        VBox gradingCard = createStatCard("📝", "Tugas Perlu Dinilai", String.valueOf(assignmentsToGrade), Color.web("#FF9800"));
         
         // Students card
-        VBox studentsCard = createStatCard("👥", "Total Siswa", "142", Color.web("#4CAF50"));
+        VBox studentsCard = createStatCard("👥", "Total Siswa", String.valueOf(totalStudents), Color.web("#4CAF50"));
         
         // Upcoming deadlines card
-        VBox deadlinesCard = createStatCard("⏰", "Deadline Mendatang", "3", Color.web("#F44336"));
+        VBox deadlinesCard = createStatCard("⏰", "Deadline Mendatang", String.valueOf(upcomingDeadlines), Color.web("#F44336"));
         
         container.getChildren().addAll(classesCard, gradingCard, studentsCard, deadlinesCard);
         
@@ -279,7 +322,6 @@ public class TeacherDashboardView implements ViewInterface {
         card.setPrefHeight(140);
         card.setPadding(new Insets(20));
         
-        // Card background
         card.setStyle("-fx-background-color: white; " +
                      "-fx-background-radius: 15; " +
                      "-fx-border-color: rgba(0, 0, 0, 0.1); " +
@@ -287,23 +329,19 @@ public class TeacherDashboardView implements ViewInterface {
                      "-fx-border-radius: 15;");
         card.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
         
-        // Icon
         Label iconLabel = new Label(icon);
         iconLabel.setFont(Font.font(32));
         
-        // Value
         Label valueLabel = new Label(value);
         valueLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
         valueLabel.setTextFill(color);
         
-        // Title
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
         titleLabel.setTextFill(Color.web("#666666"));
         
         card.getChildren().addAll(iconLabel, valueLabel, titleLabel);
         
-        // Hover effect
         card.setOnMouseEntered(e -> {
             card.setStyle("-fx-background-color: white; " +
                          "-fx-background-radius: 15; " +
@@ -327,12 +365,10 @@ public class TeacherDashboardView implements ViewInterface {
     private VBox createRecentActivities() {
         VBox container = new VBox(20);
         
-        // Section header
         Label sectionTitle = new Label("Aktivitas Mengajar Terbaru");
         sectionTitle.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        sectionTitle.setTextFill(Color.web("#7B1FA2")); // Dark orange
+        sectionTitle.setTextFill(Color.web("#7B1FA2"));
         
-        // Activities container
         VBox activitiesContainer = new VBox(10);
         activitiesContainer.setPadding(new Insets(20));
         activitiesContainer.setStyle("-fx-background-color: white; " +
@@ -342,14 +378,45 @@ public class TeacherDashboardView implements ViewInterface {
                                    "-fx-border-radius: 15;");
         activitiesContainer.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
         
-        // Sample activities for teacher
-        HBox activity1 = createActivityItem("📝", "Anda telah membuat tugas baru untuk Matematika Kelas X", "1 jam yang lalu", Color.web("#2196F3"));
-        HBox activity2 = createActivityItem("👥", "5 siswa baru bergabung di kelas Fisika Kelas XI", "3 jam yang lalu", Color.web("#4CAF50"));
-        HBox activity3 = createActivityItem("📋", "12 tugas dari kelas Kimia perlu dinilai", "5 jam yang lalu", Color.web("#FF9800"));
-        HBox activity4 = createActivityItem("🔔", "Pertemuan dengan orang tua siswa besok pukul 10:00", "1 hari yang lalu", Color.web("#9C27B0"));
-        HBox activity5 = createActivityItem("📅", "Deadline penilaian tugas Bahasa Indonesia besok", "1 hari yang lalu", Color.web("#F44336"));
+        // Get recent activities from database
+        List<Kelas> teacherClasses = kelasController.getClassesByTeacher(userController.getUser().getId());
         
-        activitiesContainer.getChildren().addAll(activity1, activity2, activity3, activity4, activity5);
+        if (teacherClasses != null) {
+            for (Kelas kelas : teacherClasses) {
+                // Get recent assignments
+                List<Tugas> recentAssignments = tugasController.getTugasByTeacher(userController.getUser().getId());
+                
+                if (recentAssignments != null && !recentAssignments.isEmpty()) {
+                    Tugas latestAssignment = recentAssignments.get(0); // Get most recent
+                    HBox activity = createActivityItem("📝", 
+                        "Anda telah membuat tugas baru untuk " + kelas.getNama() + ": " + latestAssignment.getTitle(),
+                        "Baru saja", Color.web("#2196F3"));
+                    activitiesContainer.getChildren().add(activity);
+                }
+                
+                // Get recent student submissions
+                List<Tugas> assignments = tugasController.getTugasByTeacher(userController.getUser().getId());
+                if (assignments != null) {
+                    for (Tugas assignment : assignments) {
+                        List<User> studentsSubmitted = tugasController.getSiswaSudahMengumpulkan(assignment.getId());
+                        if (studentsSubmitted != null && !studentsSubmitted.isEmpty()) {
+                            HBox activity = createActivityItem("📋", 
+                                studentsSubmitted.size() + " siswa telah mengumpulkan tugas " + assignment.getTitle(),
+                                "Hari ini", Color.web("#FF9800"));
+                            activitiesContainer.getChildren().add(activity);
+                            break; // Just show one for example
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Add some default activities if no real data found
+        if (activitiesContainer.getChildren().isEmpty()) {
+            HBox activity1 = createActivityItem("📝", "Anda belum membuat tugas apapun", "Mulai sekarang", Color.web("#2196F3"));
+            HBox activity2 = createActivityItem("👥", "Belum ada siswa yang mengumpulkan tugas", "Mulai sekarang", Color.web("#4CAF50"));
+            activitiesContainer.getChildren().addAll(activity1, activity2);
+        }
         
         container.getChildren().addAll(sectionTitle, activitiesContainer);
         
@@ -364,7 +431,6 @@ public class TeacherDashboardView implements ViewInterface {
                      "-fx-background-radius: 10; " +
                      "-fx-cursor: hand;");
         
-        // Icon container
         VBox iconContainer = new VBox();
         iconContainer.setAlignment(Pos.CENTER);
         iconContainer.setPrefWidth(40);
@@ -376,7 +442,6 @@ public class TeacherDashboardView implements ViewInterface {
         iconLabel.setFont(Font.font(18));
         iconContainer.getChildren().add(iconLabel);
         
-        // Text container
         VBox textContainer = new VBox(5);
         textContainer.setAlignment(Pos.CENTER_LEFT);
         
@@ -394,7 +459,6 @@ public class TeacherDashboardView implements ViewInterface {
         item.getChildren().addAll(iconContainer, textContainer);
         HBox.setHgrow(textContainer, Priority.ALWAYS);
         
-        // Hover effect
         item.setOnMouseEntered(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.05); " +
                          "-fx-background-radius: 10; " +

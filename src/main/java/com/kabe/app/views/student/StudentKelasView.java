@@ -163,7 +163,7 @@ public class StudentKelasView implements KelasInterface {
         Button calendarBtn = createMenuButton("📅 Kalender", false);
         Button profileBtn = createMenuButton("👤 Profile", false);
         
-        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn, profileBtn);
+        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn);
 
         dashboardBtn.setOnAction(e -> {
             if (navigationHandler != null) {
@@ -399,7 +399,7 @@ public class StudentKelasView implements KelasInterface {
                               "-fx-border-width: 1; " +
                               "-fx-border-radius: 10;");
         
-        searchSection.getChildren().addAll(searchField, filterComboBox);
+        searchSection.getChildren().addAll(searchField);
         
         return searchSection;
     }

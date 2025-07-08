@@ -4,13 +4,16 @@ import com.kabe.app.views.*;
 import com.kabe.app.views.student.*;
 import com.kabe.app.views.teacher.*;
 import javafx.stage.Stage;
-import com.kabe.app.controllers.UserController;
+import com.kabe.app.controllers.*;
 import com.kabe.app.views.interfaces.*;
 import com.kabe.app.models.*;
 
 public class NavigationController {
     private Stage primaryStage;
     UserController userController;
+    KelasController kelasController;
+    TugasController tugasController;
+
     
     public NavigationController(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -19,6 +22,8 @@ public class NavigationController {
     public void showLoginView() {
         LoginView loginView = new LoginView(primaryStage);
         userController = new UserController(loginView);
+        kelasController = new KelasController();
+        tugasController = new TugasController();
         loginView.show();
         
         loginView.setOnLoginSuccess(() -> {
@@ -29,9 +34,9 @@ public class NavigationController {
     public void showDashboardView() {
         ViewInterface dashboardView;
         if (userController.getUser().getRole().equals("siswa")) {
-            dashboardView = new StudentDashboardView(primaryStage, userController);
+            dashboardView = new StudentDashboardView(primaryStage, userController, kelasController, tugasController);
         } else {
-            dashboardView = new TeacherDashboardView(primaryStage, userController);
+            dashboardView = new TeacherDashboardView(primaryStage, userController, kelasController, tugasController);
         }
 
         dashboardView.show();
@@ -40,45 +45,31 @@ public class NavigationController {
     }
     
     public void showTasksView() {
-        ViewInterface tasksView;
+        TasksInterface tasksView;
         if (userController.getUser().getRole().equals("siswa")) {
-            tasksView = new StudentTasksView(primaryStage, userController);
+            tasksView = new StudentTasksView(primaryStage, userController, kelasController, tugasController);
         } else {
-            tasksView = new TeacherTasksView(primaryStage, userController);
+            tasksView = new TeacherTasksView(primaryStage, userController, tugasController, kelasController);
         }
         tasksView.show();
         
         tasksView.setNavigationHandler(viewName -> {
-            if (viewName.startsWith("TaskDetail:")) {
-                showDetailTasksView(viewName);
+            if (viewName.startsWith("TaskDetail")) {
+                showDetailTasksView(viewName, tasksView);
+            } else if ("AddTask".equals(viewName)) {
+                showAddTaskView();
             } else {
                 navigate(viewName);
             }
         });
     }
     
-    public void showDetailTasksView(String viewNames) {
+    public void showDetailTasksView(String viewNames, TasksInterface tasksView) {
         ViewInterface taskDetailView;
         if (userController.getUser().getRole().equals("siswa")) {
-            String[] params = viewNames.split(":");
-            String title = params[1];
-            String className = params[2];
-            String teacher = params[3];
-            String deadline = params[4];
-            String status = params[5];
-            boolean isGroupTask = Boolean.parseBoolean(params[6]);
-            
-            taskDetailView = new StudentTaskDetailView(primaryStage, title, className, teacher, deadline, status, isGroupTask);
+            taskDetailView = new StudentTaskDetailView(primaryStage, userController, kelasController, tugasController, tasksView.getSelectedTugas());
         } else {
-            String[] params = viewNames.split(":");
-            String title = params[1];
-            String className = params[2];
-            String deadline = params[3];
-            int totalStudents = Integer.valueOf(params[6]);
-            int submittedCount = Integer.valueOf(params[7]);
-            boolean isGroupTask = Boolean.parseBoolean(params[5]);
-
-            taskDetailView = new TeacherTaskDetailView(primaryStage, title, className, deadline, totalStudents, submittedCount);
+            taskDetailView = new TeacherTaskDetailView(primaryStage, userController, kelasController, tugasController, tasksView.getSelectedTugas());
         }
 
         taskDetailView.show();
@@ -97,16 +88,22 @@ public class NavigationController {
         
         kelasView.setNavigationHandler(viewName -> {
             if ("KelasDetail".equals(viewName)) {
-                KelasController kelasController = kelasView.getKelasController();
+                kelasController = kelasView.getKelasController();
                 Kelas selectedKelas = kelasView.getSelectedKelas();
                 showDetailKelasView(selectedKelas, userController, kelasController);
             } else if ("CreateClass".equals(viewName)) {
-                KelasController kelasController = kelasView.getKelasController();
+                kelasController = kelasView.getKelasController();
                 showBuatKelasView(kelasController, userController);
             } else {
                 navigate(viewName);
             }
         });
+    }
+
+    public void showAddTaskView() {
+        AddTaskView addTaskView = new AddTaskView(primaryStage, userController, kelasController, tugasController);
+        addTaskView.show();
+        addTaskView.setNavigationHandler(this::navigate);
     }
     
     public void showDetailKelasView(Kelas selectedKelas, UserController userController, KelasController kelasController) {
@@ -131,7 +128,7 @@ public class NavigationController {
     }
     
     public void showCalendarView() {
-        CalendarView calendarView = new CalendarView(primaryStage, userController);
+        CalendarView calendarView = new CalendarView(primaryStage, userController, kelasController, tugasController);
         calendarView.show();
         
         calendarView.setNavigationHandler(this::navigate);

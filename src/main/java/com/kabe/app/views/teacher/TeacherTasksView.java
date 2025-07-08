@@ -1,6 +1,7 @@
 package com.kabe.app.views.teacher;
 
-import com.kabe.app.controllers.UserController;
+import com.kabe.app.controllers.*;
+import com.kabe.app.models.*;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,9 +15,12 @@ import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import com.kabe.app.views.interfaces.ViewInterface;
+import com.kabe.app.views.interfaces.TasksInterface;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
-public class TeacherTasksView implements ViewInterface {
+public class TeacherTasksView implements TasksInterface {
     private Stage stage;
     private Scene scene;
     private BorderPane root;
@@ -26,16 +30,21 @@ public class TeacherTasksView implements ViewInterface {
     private ComboBox<String> classFilter;
     private ComboBox<String> statusFilter;
     private VBox tasksContainer;
-    private ViewInterface.NavigationHandler navigationHandler;
+    private TasksInterface.NavigationHandler navigationHandler;
     private UserController userController;
+    private TugasController tugasController;
+    private KelasController kelasController;
+    private Tugas selectedTugas;
 
     @Override
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
     
-    public TeacherTasksView(Stage stage, UserController userController) {
+    public TeacherTasksView(Stage stage, UserController userController, TugasController tugasController, KelasController kelasController) {
         this.userController = userController;
+        this.tugasController = tugasController;
+        this.kelasController = kelasController;
         this.stage = stage;
         initializeView();
     }
@@ -302,8 +311,12 @@ public class TeacherTasksView implements ViewInterface {
                            "-fx-padding: 10;");
         
         // Class filter (primary filter for teachers)
+        
         classFilter = new ComboBox<>();
-        classFilter.getItems().addAll("Semua Kelas", "XII IPA 1", "XII IPA 2", "XI IPA 1", "XI IPA 2", "X IPA 1", "X IPA 2");
+        for (Kelas kelas : kelasController.getClassesByTeacher(userController.getUser().getId())) {
+            String namaKelas = kelas.getNama();
+            classFilter.getItems().add(namaKelas);
+        }
         classFilter.setValue("Semua Kelas");
         classFilter.setPrefWidth(150);
         classFilter.setPrefHeight(40);
@@ -323,7 +336,7 @@ public class TeacherTasksView implements ViewInterface {
                             "-fx-border-color: rgba(0, 0, 0, 0.1); " +
                             "-fx-border-radius: 10;");
         
-        container.getChildren().addAll(searchField, classFilter, statusFilter);
+        container.getChildren().addAll(searchField);
         
         return container;
     }
@@ -339,16 +352,55 @@ public class TeacherTasksView implements ViewInterface {
         tasksContainer.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
         
         // Sample tasks for teacher
-        HBox task1 = createTaskItem("Tugas Matematika - Integral", "XII IPA 1", "2024-01-15", "Aktif", true, 25, 18);
-        HBox task2 = createTaskItem("Laporan Praktikum Fisika", "XI IPA 2", "2024-01-12", "Berakhir", false, 22, 22);
-        HBox task3 = createTaskItem("Proyek Biologi - Ekosistem", "X IPA 1", "2024-01-20", "Aktif", true, 28, 12);
-        HBox task4 = createTaskItem("Essay Bahasa Indonesia", "XII IPA 2", "2024-01-10", "Berakhir", false, 20, 17);
-        HBox task5 = createTaskItem("Eksperimen Kimia Organik", "XI IPA 1", "2024-01-18", "Draft", true, 0, 0);
-        
-        tasksContainer.getChildren().addAll(task1, task2, task3, task4, task5);
+        for (Tugas tugas : tugasController.getTugasByTeacher(userController.getUser().getId())) {
+            HBox task = createTaskItem(tugas);
+            tasksContainer.getChildren().add(task);
+        }
+    }
+
+    private String getStatusTugas(Timestamp timestamp, Tugas tugass) {
+        Tugas tugas = tugass;
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String deadline = dateTime.format(formatter);
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        String status;
+        if (now.before(timestamp)) {
+            status = "Aktif";
+        } else {
+            status = "Berakhir";
+        }
+
+        return status;
     }
     
-    private HBox createTaskItem(String title, String className, String deadline, String status, boolean isGroupTask, int totalStudents, int submitted) {
+    private HBox createTaskItem(Tugas tugas) {
+        String title = tugas.getTitle();
+        String className = kelasController.getKelasById(tugas.getKelasId()).getNama();
+        Timestamp timestamp = tugas.getDeadline();
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String deadline = dateTime.format(formatter);
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        String status;
+        if (now.before(timestamp)) {
+            status = "Aktif";
+        } else {
+            status = "Berakhir";
+        }
+
+        boolean isGroupTask;
+        if (tugas.getTipe().equals("individu")) {
+            isGroupTask = false;
+        } else {
+            isGroupTask = true;
+        }
+
+        int totalStudents = kelasController.getStudentCount(tugas.getKelasId());
+        int submitted = tugasController.countUniquePengumpul(tugas.getId());
+
         HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
@@ -421,6 +473,11 @@ public class TeacherTasksView implements ViewInterface {
             groupLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 10));
             groupLabel.setTextFill(Color.web("#9C27B0"));
             rightContainer.getChildren().add(groupLabel);
+        } else {
+            Label groupLabel = new Label("Tugas Individu");
+            groupLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 10));
+            groupLabel.setTextFill(Color.web("#9C27B0"));
+            rightContainer.getChildren().add(groupLabel);
         }
         
         // Action buttons
@@ -452,7 +509,8 @@ public class TeacherTasksView implements ViewInterface {
         // Click event
         item.setOnMouseClicked(e -> {
             if (navigationHandler != null) {
-                navigationHandler.handleNavigation("TaskDetail:" + title + ":" + className + ":" + deadline + ":" + status + ":" + isGroupTask + ":" + totalStudents + ":" + submitted);
+                setSelectedTugas(tugas);
+                navigationHandler.handleNavigation("TaskDetail");
             }
         });
 
@@ -470,6 +528,14 @@ public class TeacherTasksView implements ViewInterface {
         });
         
         return item;
+    }
+
+    public Tugas getSelectedTugas() {
+        return this.selectedTugas;
+    }
+
+    public void setSelectedTugas(Tugas selectedTugas) {
+        this.selectedTugas = selectedTugas;
     }
     
     public void show() {

@@ -17,13 +17,18 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.File;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
-import com.kabe.app.controllers.UserController;
-import com.kabe.app.views.interfaces.ViewInterface;
+import com.kabe.app.views.interfaces.TasksInterface;
+import com.kabe.app.controllers.*;
+import com.kabe.app.models.Tugas;
+import com.kabe.app.models.TugasSiswa;
 
-public class StudentTasksView implements ViewInterface {
+public class StudentTasksView implements TasksInterface {
     private Stage stage;
     private Scene scene;
     private BorderPane root;
@@ -33,15 +38,21 @@ public class StudentTasksView implements ViewInterface {
     private ComboBox<String> statusFilter;
     private ComboBox<String> classFilter;
     private VBox tasksContainer;
-    private ViewInterface.NavigationHandler navigationHandler;
+    private TasksInterface.NavigationHandler navigationHandler;
     private UserController userController;
+    private KelasController kelasController;
+    private TugasController tugasController;
+    private Tugas selectedTugas;
+    private String score;
 
     public void setNavigationHandler(NavigationHandler handler) {
         this.navigationHandler = handler;
     }
     
-    public StudentTasksView(Stage stage, UserController userController) {
+    public StudentTasksView(Stage stage, UserController userController, KelasController kelasController, TugasController tugasController) {
         this.userController = userController;
+        this.kelasController = kelasController;
+        this.tugasController = tugasController;
         this.stage = stage;
         initializeView();
     }
@@ -119,7 +130,7 @@ public class StudentTasksView implements ViewInterface {
         Button calendarBtn = createMenuButton("📅 Kalender", false);
         Button profileBtn = createMenuButton("👤 Profile", false);
         
-        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn, profileBtn);
+        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn);
 
         dashboardBtn.setOnAction(e -> {
             if (navigationHandler != null) {
@@ -298,7 +309,7 @@ public class StudentTasksView implements ViewInterface {
                            "-fx-border-color: rgba(0, 0, 0, 0.1); " +
                            "-fx-border-radius: 10;");
         
-        container.getChildren().addAll(searchField, statusFilter, classFilter);
+        container.getChildren().addAll(searchField);
         
         return container;
     }
@@ -314,22 +325,50 @@ public class StudentTasksView implements ViewInterface {
         tasksContainer.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
         
         // Sample tasks
-        HBox task1 = createTaskItem("Tugas Matematika - Integral", "Matematika", "Bu Sari", "2024-01-15", "Belum Dikumpulkan", false);
-        HBox task2 = createTaskItem("Laporan Praktikum Fisika", "Fisika", "Pak Budi", "2024-01-12", "Sudah Dikumpulkan", false);
-        HBox task3 = createTaskItem("Proyek Biologi - Ekosistem", "Biologi", "Bu Rina", "2024-01-20", "Belum Dikumpulkan", true);
-        HBox task4 = createTaskItem("Essay Bahasa Indonesia", "Bahasa Indonesia", "Pak Ahmad", "2024-01-10", "Terlambat", false);
-        HBox task5 = createTaskItem("Eksperimen Kimia Organik", "Kimia", "Bu Dewi", "2024-01-18", "Belum Dikumpulkan", true);
-        
-        tasksContainer.getChildren().addAll(task1, task2, task3, task4, task5);
+        for (Tugas tugas : tugasController.getTugasBySiswa(userController.getUser().getId())) {
+            HBox task = createTaskItem(tugas);
+            tasksContainer.getChildren().add(task);
+        }
     }
     
-    private HBox createTaskItem(String title, String className, String teacher, String deadline, String status, boolean isGroupTask) {
+    private HBox createTaskItem(Tugas tugas) {
+        String title = tugas.getTitle();
+        String className = kelasController.getKelasById(tugas.getKelasId()).getNama();
+        int teacherId = kelasController.getKelasById(tugas.getKelasId()).getPengajarId();
+        String teacher = userController.getUserById(teacherId).getFullName();
+        Timestamp timestamp = tugas.getDeadline();
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String deadline = dateTime.format(formatter);
+        Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+
+        String status = tugasController.getStatusTugas(tugas.getId(), userController.getUser().getId());
+        // Get the score for this task
+        TugasSiswa tugasSiswa = tugasController.getDetailTugasSiswa(tugas.getId(), userController.getUser().getId());
+        boolean isGraded;
+        if (tugasSiswa != null) {
+            score = tugasSiswa.getNilai();
+            isGraded = true;
+        } else {
+            System.out.println("Tugas siswa tidak ditemukan.");
+            isGraded = false;
+        }
+
+        
+
+        boolean isGroupTask;
+        if (tugas.getTipe().equals("individu")) {
+            isGroupTask = false;
+        } else {
+            isGroupTask = true;
+        }
+
         HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
         item.setStyle("-fx-background-color: transparent; " +
-                     "-fx-background-radius: 10; " +
-                     "-fx-cursor: hand;");
+                    "-fx-background-radius: 10; " +
+                    "-fx-cursor: hand;");
         
         // Task icon
         Label taskIcon = new Label(isGroupTask ? "📚" : "📔");
@@ -363,25 +402,37 @@ public class StudentTasksView implements ViewInterface {
         switch (status) {
             case "Belum Dikumpulkan":
                 statusBadge.setStyle("-fx-background-color: #FFF3E0; " +
-                                   "-fx-text-fill: #FF9800; " +
-                                   "-fx-background-radius: 15;");
+                                "-fx-text-fill: #FF9800; " +
+                                "-fx-background-radius: 15;");
                 break;
             case "Sudah Dikumpulkan":
                 statusBadge.setStyle("-fx-background-color: #E8F5E9; " +
-                                   "-fx-text-fill: #4CAF50; " +
-                                   "-fx-background-radius: 15;");
+                                "-fx-text-fill: #4CAF50; " +
+                                "-fx-background-radius: 15;");
                 break;
             case "Terlambat":
                 statusBadge.setStyle("-fx-background-color: #FFEBEE; " +
-                                   "-fx-text-fill: #F44336; " +
-                                   "-fx-background-radius: 15;");
+                                "-fx-text-fill: #F44336; " +
+                                "-fx-background-radius: 15;");
                 break;
         }
         
-        // Group task indicator
+        // Score label (only shown if task is submitted)
+        Label scoreLabel = null;
+        if (status.equals("Sudah Dikumpulkan") || status.equals("Terlambat")) {
+            scoreLabel = new Label(isGraded ? "Nilai: " + score : "Belum dinilai");
+            scoreLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+            scoreLabel.setTextFill(isGraded ? Color.web("#2196F3") : Color.web("#888888"));
+        }
+        
+        // Right container for status and score
         VBox rightContainer = new VBox(5);
         rightContainer.setAlignment(Pos.CENTER_RIGHT);
         rightContainer.getChildren().add(statusBadge);
+        
+        if (scoreLabel != null) {
+            rightContainer.getChildren().add(scoreLabel);
+        }
         
         if (isGroupTask) {
             Label groupLabel = new Label("Tugas Kelompok");
@@ -394,27 +445,35 @@ public class StudentTasksView implements ViewInterface {
         HBox.setHgrow(taskInfo, Priority.ALWAYS);
         
         // Click event
-        //item.setOnMouseClicked(e -> showTaskDetailDialog(title, className, teacher, deadline, status, isGroupTask));
         item.setOnMouseClicked(e -> {
             if (navigationHandler != null) {
-                navigationHandler.handleNavigation("TaskDetail:" + title + ":" + className + ":" + teacher + ":" + deadline + ":" + status + ":" + isGroupTask);
+                setSelectedTugas(tugas);
+                navigationHandler.handleNavigation("TaskDetail");
             }
         });
 
         // Hover effect
         item.setOnMouseEntered(e -> {
             item.setStyle("-fx-background-color: rgba(0, 0, 0, 0.05); " +
-                         "-fx-background-radius: 10; " +
-                         "-fx-cursor: hand;");
+                        "-fx-background-radius: 10; " +
+                        "-fx-cursor: hand;");
         });
         
         item.setOnMouseExited(e -> {
             item.setStyle("-fx-background-color: transparent; " +
-                         "-fx-background-radius: 10; " +
-                         "-fx-cursor: hand;");
+                        "-fx-background-radius: 10; " +
+                        "-fx-cursor: hand;");
         });
         
         return item;
+    }
+
+    public Tugas getSelectedTugas() {
+        return this.selectedTugas;
+    }
+
+    public void setSelectedTugas(Tugas selectedTugas) {
+        this.selectedTugas = selectedTugas;
     }
     
     public void show() {

@@ -11,7 +11,21 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import com.kabe.app.controllers.*;
+import com.kabe.app.dao.TugasDAO;
+import com.kabe.app.models.*;
+import java.awt.Desktop;
+import java.io.File;
 
 import com.kabe.app.views.interfaces.ViewInterface;
 
@@ -20,6 +34,10 @@ public class TeacherTaskDetailView implements ViewInterface {
     private Scene scene;
     private VBox root;
     private NavigationHandler navigationHandler;
+    private UserController userController;
+    private KelasController kelasController;
+    private TugasController tugasController;
+    private Tugas tugas;
     
     // Task data
     private String title;
@@ -32,15 +50,26 @@ public class TeacherTaskDetailView implements ViewInterface {
         this.navigationHandler = handler;
     }
     
-    public TeacherTaskDetailView(Stage stage, String title, String className, 
-                               String deadline, int submittedCount, int totalStudents) {
+    public TeacherTaskDetailView(Stage stage, UserController userController, KelasController kelasController, TugasController tugasController, Tugas tugas) {
+        this.userController = userController;
+        this.kelasController = kelasController;
+        this.tugasController = tugasController;
+        this.tugas = tugas;
         this.stage = stage;
-        this.title = title;
-        this.className = className;
-        this.deadline = deadline;
-        this.submittedCount = submittedCount;
-        this.totalStudents = totalStudents;
+        initializeData();
         initializeView();
+    }
+
+    private void initializeData() {
+        this.title = tugas.getTitle();
+        this.className = kelasController.getKelasById(tugas.getKelasId()).getNama();
+
+        Timestamp timestamp = tugas.getDeadline();
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        this.deadline = dateTime.format(formatter);
+        this.submittedCount = tugasController.countUniquePengumpul(tugas.getId());
+        this.totalStudents = kelasController.getStudentCount(tugas.getKelasId());
     }
     
     private void initializeView() {
@@ -180,10 +209,7 @@ public class TeacherTaskDetailView implements ViewInterface {
         descriptionLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         descriptionLabel.setTextFill(Color.web("#4A148C")); // Dark purple
         
-        Label description = new Label("Kerjakan soal-soal yang telah diberikan dengan lengkap dan benar. " +
-                                    "Sertakan langkah-langkah penyelesaian yang jelas dan rapi. " +
-                                    "Pastikan semua jawaban disertai dengan penjelasan yang memadai dan " +
-                                    "gunakan metode yang telah dipelajari di kelas.");
+        Label description = new Label(tugas.getDeskripsi());
         description.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
         description.setTextFill(Color.web("#333333"));
         description.setWrapText(true);
@@ -231,11 +257,11 @@ public class TeacherTaskDetailView implements ViewInterface {
         searchField.setPrefWidth(300);
         searchField.setPrefHeight(40);
         searchField.setStyle("-fx-background-color: white; " +
-                           "-fx-background-radius: 10; " +
-                           "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                           "-fx-border-width: 1; " +
-                           "-fx-border-radius: 10; " +
-                           "-fx-padding: 10;");
+                        "-fx-background-radius: 10; " +
+                        "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                        "-fx-border-width: 1; " +
+                        "-fx-border-radius: 10; " +
+                        "-fx-padding: 10;");
         
         ComboBox<String> filterCombo = new ComboBox<>();
         filterCombo.getItems().addAll("Semua", "Sudah Dinilai", "Belum Dinilai");
@@ -252,33 +278,50 @@ public class TeacherTaskDetailView implements ViewInterface {
         // Submissions list
         VBox submissionsList = new VBox(15);
         
-        // Sample submissions (in a real app, this would come from data)
-        HBox submission1 = createSubmissionItem("John Doe", "Tugas_Matematika_John.pdf", "2024-01-14 10:30", true, "A", "Bagus sekali!");
-        HBox submission2 = createSubmissionItem("Jane Smith", "Tugas_Matematika_Jane.docx", "2024-01-14 11:45", false, "", "");
-        HBox submission3 = createSubmissionItem("Mike Johnson", "Tugas_Matematika_Mike.pdf", "2024-01-15 09:15", true, "B", "Kurang lengkap");
+        // Get actual submitted students data
+        try {
+            List<User> submittedStudents = tugasController.getSiswaSudahMengumpulkan(tugas.getId());
         
-        submissionsList.getChildren().addAll(submission1, submission2, submission3);
+            for (User student : submittedStudents) {
+                // Dapatkan detail submission termasuk nilai dan feedback
+                TugasSiswa submission = tugasController.getDetailTugasSiswa(tugas.getId(), student.getId());
+                
+                String fileName = submission.getFileName();
+                String submitTime = submission.getCreatedAt().toLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                boolean isGraded = submission.getNilai() != null && !submission.getNilai().isEmpty();
+                String grade = isGraded ? submission.getNilai() : "";
+                String feedback = isGraded ? submission.getFeedback() : "";
+                
+                HBox submissionItem = createSubmissionItem(student, fileName, submitTime, isGraded, grade, feedback);
+                submissionsList.getChildren().add(submissionItem);
+            }
+        } catch (Exception e) {
+            Label errorLabel = new Label("Error loading submissions: " + e.getMessage());
+            errorLabel.setTextFill(Color.RED);
+            submissionsList.getChildren().add(errorLabel);
+        }
         
         content.getChildren().addAll(searchBox, submissionsList);
         return content;
     }
     
-    private HBox createSubmissionItem(String studentName, String fileName, String submitTime, 
-                                     boolean isGraded, String grade, String feedback) {
+    private HBox createSubmissionItem(User student, String fileName, String submitTime, 
+                                 boolean isGraded, String grade, String feedback) {
         HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
         item.setStyle("-fx-background-color: " + (isGraded ? "#F3E5F5" : "#F8F9FA") + "; " +
-                     "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                     "-fx-border-radius: 10; " +
-                     "-fx-background-radius: 10;");
+                    "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-background-radius: 10;");
         
         // Student info
         VBox studentInfo = new VBox(5);
         
-        Label nameLabel = new Label(studentName);
+        Label nameLabel = new Label(student.getFullName());
         nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        nameLabel.setTextFill(Color.web("#4A148C")); // Dark purple
+        nameLabel.setTextFill(Color.web("#4A148C"));
         
         Label fileLabel = new Label(fileName + " • " + submitTime);
         fileLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
@@ -286,32 +329,15 @@ public class TeacherTaskDetailView implements ViewInterface {
         
         studentInfo.getChildren().addAll(nameLabel, fileLabel);
         
-        // Grade section
+        // Grade section - akan diupdate setelah pemberian nilai
         VBox gradeSection = new VBox(5);
         gradeSection.setAlignment(Pos.CENTER_RIGHT);
         
-        if (isGraded) {
-            Label gradeLabel = new Label("Nilai: " + grade);
-            gradeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-            gradeLabel.setTextFill(Color.web("#4A148C")); // Dark purple
-            
-            Label feedbackLabel = new Label("Feedback: " + feedback);
-            feedbackLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
-            feedbackLabel.setTextFill(Color.web("#666666"));
-            
-            gradeSection.getChildren().addAll(gradeLabel, feedbackLabel);
-        } else {
-            Label notGradedLabel = new Label("Belum dinilai");
-            notGradedLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
-            notGradedLabel.setTextFill(Color.web("#FF9800")); // Orange
-            
-            gradeSection.getChildren().add(notGradedLabel);
-        }
+        // Action buttons and grade input
+        HBox actionSection = new HBox(10);
+        actionSection.setAlignment(Pos.CENTER_RIGHT);
         
-        // Action buttons
-        HBox actionButtons = new HBox(10);
-        actionButtons.setAlignment(Pos.CENTER_RIGHT);
-        
+        // Download button
         Button downloadBtn = new Button("⬇");
         downloadBtn.setFont(Font.font(14));
         downloadBtn.setStyle("-fx-background-color: #2196F3; " +
@@ -321,17 +347,120 @@ public class TeacherTaskDetailView implements ViewInterface {
                             "-fx-min-width: 30; " +
                             "-fx-min-height: 30;");
         
-        Button gradeBtn = new Button(isGraded ? "Ubah Nilai" : "Beri Nilai");
+        // Grade input field
+        TextField gradeField = new TextField();
+        gradeField.setPromptText("Nilai");
+        gradeField.setPrefWidth(60);
+        gradeField.setStyle("-fx-background-color: white; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                        "-fx-border-width: 1; " +
+                        "-fx-border-radius: 5;");
+        
+        // Feedback input field
+        TextField feedbackField = new TextField();
+        feedbackField.setPromptText("Feedback");
+        feedbackField.setPrefWidth(120);
+        feedbackField.setStyle("-fx-background-color: white; " +
+                            "-fx-background-radius: 5; " +
+                            "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                            "-fx-border-width: 1; " +
+                            "-fx-border-radius: 5;");
+        
+        // Grade button
+        Button gradeBtn = new Button(isGraded ? "Update" : "Beri Nilai");
         gradeBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-        gradeBtn.setStyle("-fx-background-color: #9C27B0; " + // Purple
-                         "-fx-text-fill: white; " +
-                         "-fx-cursor: hand; " +
-                         "-fx-background-radius: 15; " +
-                         "-fx-padding: 5 15;");
+        gradeBtn.setStyle("-fx-background-color: #9C27B0; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-background-radius: 15; " +
+                        "-fx-padding: 5 15;");
         
-        actionButtons.getChildren().addAll(downloadBtn, gradeBtn);
+        // Jika sudah dinilai, isi field dan tampilkan info nilai
+        if (isGraded) {
+            gradeField.setText(grade);
+            feedbackField.setText(feedback);
+            
+            Label gradeLabel = new Label("Nilai: " + grade);
+            gradeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            gradeLabel.setTextFill(Color.web("#4A148C"));
+            
+            Label feedbackLabel = new Label("Feedback: " + feedback);
+            feedbackLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+            feedbackLabel.setTextFill(Color.web("#666666"));
+            
+            gradeSection.getChildren().addAll(gradeLabel, feedbackLabel);
+        } else {
+            Label notGradedLabel = new Label("Belum dinilai");
+            notGradedLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 14));
+            notGradedLabel.setTextFill(Color.web("#FF9800"));
+            
+            gradeSection.getChildren().add(notGradedLabel);
+        }
         
-        item.getChildren().addAll(studentInfo, gradeSection, actionButtons);
+        // Grade functionality
+        gradeBtn.setOnAction(e -> {
+            String newGrade = gradeField.getText().trim();
+            String newFeedback = feedbackField.getText().trim();
+
+            if (newFeedback == null) {
+                newFeedback = "no feedback";
+            }
+            
+            if (newGrade.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Warning");
+                alert.setHeaderText(null);
+                alert.setContentText("Silakan masukkan nilai!");
+                alert.showAndWait();
+                return;
+            }
+            
+            try {
+                // Simpan nilai dan feedback ke database
+                tugasController.beriNilai(tugas.getId(), student.getId(), newGrade);
+                tugasController.beriFeedback(tugas.getId(), student.getId(), newFeedback);
+                
+                // Update tampilan
+                gradeSection.getChildren().clear();
+                
+                Label gradeLabel = new Label("Nilai: " + newGrade);
+                gradeLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+                gradeLabel.setTextFill(Color.web("#4A148C"));
+                
+                Label feedbackLabel = new Label("Feedback: " + newFeedback);
+                feedbackLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+                feedbackLabel.setTextFill(Color.web("#666666"));
+                
+                gradeSection.getChildren().addAll(gradeLabel, feedbackLabel);
+                
+                // Update style item
+                item.setStyle("-fx-background-color: #F3E5F5; " +
+                            "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                            "-fx-border-radius: 10; " +
+                            "-fx-background-radius: 10;");
+                
+                // Update button text
+                gradeBtn.setText("Update");
+                
+                // Show success message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Success");
+                alert.setHeaderText(null);
+                alert.setContentText("Nilai berhasil disimpan!");
+                alert.showAndWait();
+                
+            } catch (Exception ex) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Gagal menyimpan nilai: " + ex.getMessage());
+                alert.showAndWait();
+            }
+        });
+        
+        actionSection.getChildren().addAll(downloadBtn, gradeField, feedbackField, gradeBtn);
+        item.getChildren().addAll(studentInfo, gradeSection, actionSection);
         HBox.setHgrow(studentInfo, Priority.ALWAYS);
         
         return item;
@@ -344,45 +473,95 @@ public class TeacherTaskDetailView implements ViewInterface {
         // List of students who haven't submitted
         VBox studentsList = new VBox(10);
         
-        // Sample students (in a real app, this would come from data)
-        HBox student1 = createStudentItem("Sarah Wilson", "sarah@example.com");
-        HBox student2 = createStudentItem("Robert Brown", "robert@example.com");
-        HBox student3 = createStudentItem("Emily Davis", "emily@example.com");
-        
-        studentsList.getChildren().addAll(student1, student2, student3);
+        // Get actual not submitted students data
+        try {
+            List<User> notSubmittedStudents = tugasController.getSiswaBelumMengumpulkan(tugas.getId(), tugas.getKelasId());
+            
+            for (User student : notSubmittedStudents) {
+                HBox studentItem = createStudentItem(student);
+                studentsList.getChildren().add(studentItem);
+            }
+            
+            if (notSubmittedStudents.isEmpty()) {
+                Label noStudentsLabel = new Label("Semua siswa sudah mengumpulkan tugas!");
+                noStudentsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+                noStudentsLabel.setTextFill(Color.web("#4CAF50")); // Green
+                studentsList.getChildren().add(noStudentsLabel);
+            }
+        } catch (Exception e) {
+            Label errorLabel = new Label("Error loading students: " + e.getMessage());
+            errorLabel.setTextFill(Color.RED);
+            studentsList.getChildren().add(errorLabel);
+        }
         
         // Reminder button
         Button reminderBtn = new Button("Kirim Pengingat");
         reminderBtn.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         reminderBtn.setStyle("-fx-background-color: #9C27B0; " + // Purple
-                           "-fx-text-fill: white; " +
-                           "-fx-background-radius: 10; " +
-                           "-fx-cursor: hand; " +
-                           "-fx-padding: 15 30;");
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 10; " +
+                        "-fx-cursor: hand; " +
+                        "-fx-padding: 15 30;");
+        
+        // Reminder functionality
+        reminderBtn.setOnAction(e -> {
+            try {
+                // Get list of students who haven't submitted
+                List<User> notSubmittedStudents = tugasController.getSiswaBelumMengumpulkan(tugas.getId(), tugas.getKelasId());
+                
+                if (notSubmittedStudents.isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Info");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Semua siswa sudah mengumpulkan tugas!");
+                    alert.showAndWait();
+                    return;
+                }
+                
+                // Implement reminder logic here
+                // You might want to call a method in tugasController to send reminders
+                System.out.println("Sending reminder to " + notSubmittedStudents.size() + " students");
+                // tugasController.sendReminder(tugas.getId(), notSubmittedStudents);
+                
+                // Show success message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Success");
+                alert.setHeaderText(null);
+                alert.setContentText("Pengingat berhasil dikirim ke " + notSubmittedStudents.size() + " siswa!");
+                alert.showAndWait();
+                
+            } catch (Exception ex) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText(null);
+                alert.setContentText("Gagal mengirim pengingat: " + ex.getMessage());
+                alert.showAndWait();
+            }
+        });
         
         content.getChildren().addAll(studentsList, reminderBtn);
         return content;
     }
     
-    private HBox createStudentItem(String name, String email) {
+    private HBox createStudentItem(User student) {
         HBox item = new HBox(20);
         item.setAlignment(Pos.CENTER_LEFT);
         item.setPadding(new Insets(15));
         item.setStyle("-fx-background-color: #F8F9FA; " +
-                     "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                     "-fx-border-radius: 10; " +
-                     "-fx-background-radius: 10;");
+                    "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                    "-fx-border-radius: 10; " +
+                    "-fx-background-radius: 10;");
         
         Label avatar = new Label("👤");
         avatar.setFont(Font.font(24));
         
         VBox studentInfo = new VBox(5);
         
-        Label nameLabel = new Label(name);
+        Label nameLabel = new Label(student.getFullName());
         nameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
         nameLabel.setTextFill(Color.web("#4A148C")); // Dark purple
         
-        Label emailLabel = new Label(email);
+        Label emailLabel = new Label(student.getEmail());
         emailLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         emailLabel.setTextFill(Color.web("#666666"));
         
@@ -397,7 +576,7 @@ public class TeacherTaskDetailView implements ViewInterface {
         
         return item;
     }
-    
+        
     public void show() {
         stage.show();
     }

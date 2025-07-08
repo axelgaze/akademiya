@@ -69,4 +69,9 @@ public class Kelas {
         public void setCreatedTime(LocalDateTime created_time) {
             this.created_time = created_time;
         }
+
+        @Override
+        public String toString() {
+            return this.nama;
+        }
     }

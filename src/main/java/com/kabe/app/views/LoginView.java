@@ -171,7 +171,7 @@ public class LoginView {
         forgotPasswordLabel.setStyle("-fx-cursor: hand;");
         
         loginForm.getChildren().addAll(formTitle, loginUsernameField, loginPasswordField, 
-                                      loginButton, forgotPasswordLabel);
+                                      loginButton);
     }
     
     private void createRegisterForm() {

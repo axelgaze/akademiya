@@ -13,7 +13,18 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
+import com.kabe.app.models.Kelas;
+import com.kabe.app.models.PemberitahuanKelas;
+import com.kabe.app.models.Tugas;
 import com.kabe.app.models.User;
+import java.time.Duration;
+
+import java.util.List;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
+import com.kabe.app.controllers.KelasController;
+import com.kabe.app.controllers.TugasController;
 import com.kabe.app.controllers.UserController;
 import com.kabe.app.views.interfaces.ViewInterface;
 
@@ -25,9 +36,14 @@ public class StudentDashboardView implements ViewInterface {
     private VBox mainContent;
     private NavigationHandler navigationHandler;
     private UserController userController;
+    private KelasController kelasController; // Tambahkan
+    private TugasController tugasController; // Tambahkan
     
-    public StudentDashboardView(Stage stage, UserController userController) {
+    public StudentDashboardView(Stage stage, UserController userController, 
+                              KelasController kelasController, TugasController tugasController) {
         this.userController = userController;
+        this.kelasController = kelasController; // Inisialisasi
+        this.tugasController = tugasController; // Inisialisasi
         this.stage = stage;
         initializeView();
     }
@@ -112,7 +128,7 @@ public class StudentDashboardView implements ViewInterface {
         Button calendarBtn = createMenuButton("📅 Kalender", false);
         Button profileBtn = createMenuButton("👤 Profile", false);
         
-        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn, profileBtn);
+        navigationMenu.getChildren().addAll(dashboardBtn, tasksBtn, classesBtn, calendarBtn);
 
         dashboardBtn.setOnAction(e -> {
         if (navigationHandler != null) {
@@ -257,17 +273,37 @@ public class StudentDashboardView implements ViewInterface {
         HBox container = new HBox(20);
         container.setAlignment(Pos.CENTER);
         
-        // Completed tasks card
-        VBox completedCard = createStatCard("✅", "Tugas Selesai", "12", Color.web("#4CAF50"));
+        // Ambil data tugas dari database
+        int userId = userController.getUser().getId();
+        List<Tugas> semuaTugas = tugasController.getTugasBySiswa(userId);
         
-        // Pending tasks card  
-        VBox pendingCard = createStatCard("⏳", "Tugas Tertunda", "5", Color.web("#FF9800"));
+        // Hitung statistik
+        long completed = semuaTugas.stream()
+            .filter(t -> "Sudah Dikumpulkan".equals(tugasController.getStatusTugas(t.getId(), userId)))
+            .count();
         
-        // Overdue tasks card
-        VBox overdueCard = createStatCard("⚠️", "Tugas Terlambat", "2", Color.web("#F44336"));
+        long pending = semuaTugas.stream()
+            .filter(t -> {
+                String status = tugasController.getStatusTugas(t.getId(), userId);
+                return "Belum Dikumpulkan".equals(status) || "dalam_proses".equals(status);
+            })
+            .count();
         
-        // Total classes card
-        VBox classesCard = createStatCard("🏫", "Total Kelas", "8", Color.web("#2196F3"));
+        long overdue = semuaTugas.stream()
+            .filter(t -> {
+                String status = tugasController.getStatusTugas(t.getId(), userId);
+                return "Terlambat".equals(status);
+            })
+            .count();
+        
+        // Ambil jumlah kelas
+        int totalKelas = kelasController.getClassesByUser(userId).size();
+        
+        // Buat card dengan data nyata
+        VBox completedCard = createStatCard("✅", "Tugas Selesai", String.valueOf(completed), Color.web("#4CAF50"));
+        VBox pendingCard = createStatCard("⏳", "Tugas Tertunda", String.valueOf(pending), Color.web("#FF9800"));
+        VBox overdueCard = createStatCard("⚠️", "Tugas Terlambat", String.valueOf(overdue), Color.web("#F44336"));
+        VBox classesCard = createStatCard("🏫", "Total Kelas", String.valueOf(totalKelas), Color.web("#2196F3"));
         
         container.getChildren().addAll(completedCard, pendingCard, overdueCard, classesCard);
         
@@ -338,24 +374,92 @@ public class StudentDashboardView implements ViewInterface {
         VBox activitiesContainer = new VBox(10);
         activitiesContainer.setPadding(new Insets(20));
         activitiesContainer.setStyle("-fx-background-color: white; " +
-                                   "-fx-background-radius: 15; " +
-                                   "-fx-border-color: rgba(0, 0, 0, 0.1); " +
-                                   "-fx-border-width: 1; " +
-                                   "-fx-border-radius: 15;");
+                                "-fx-background-radius: 15; " +
+                                "-fx-border-color: rgba(0, 0, 0, 0.1); " +
+                                "-fx-border-width: 1; " +
+                                "-fx-border-radius: 15;");
         activitiesContainer.setEffect(new DropShadow(10, Color.web("#E0E0E0")));
         
-        // Sample activities
-        HBox activity1 = createActivityItem("📋", "Tugas Matematika Bab 5 telah dinilai", "2 jam yang lalu", Color.web("#4CAF50"));
-        HBox activity2 = createActivityItem("📚", "Materi baru ditambahkan di kelas Fisika", "4 jam yang lalu", Color.web("#2196F3"));
-        HBox activity3 = createActivityItem("👥", "Revisi dari kelompok untuk Proyek Biologi", "6 jam yang lalu", Color.web("#FF9800"));
-        HBox activity4 = createActivityItem("🔔", "Pemberitahuan dari Bu Sarah: Kelas besok pindah ruang", "8 jam yang lalu", Color.web("#9C27B0"));
-        HBox activity5 = createActivityItem("📝", "Tugas Bahasa Indonesia deadline besok", "1 hari yang lalu", Color.web("#F44336"));
+        // Ambil aktivitas terbaru dari database
+        int userId = userController.getUser().getId();
+        List<Kelas> kelasList = kelasController.getClassesByUser(userId);
         
-        activitiesContainer.getChildren().addAll(activity1, activity2, activity3, activity4, activity5);
+        for (Kelas kelas : kelasList) {
+            List<PemberitahuanKelas> pemberitahuanList = kelasController.getPemberitahuanKelas(kelas.getId());
+            
+            for (PemberitahuanKelas pemberitahuan : pemberitahuanList) {
+                HBox activityItem = createActivityItem(
+                    "📢", 
+                    "Pemberitahuan dari "+kelasController.getKelasById(pemberitahuan.getIdKelas())+": "+pemberitahuan.getIsi(), 
+                    formatTimeAgo(pemberitahuan.getCreatedTime()), 
+                    Color.web("#4CAF50")
+                );
+                activitiesContainer.getChildren().add(activityItem);
+            }
+        }
+        
+        // Tambahkan juga notifikasi tugas
+        List<Tugas> tugasList = tugasController.getTugasBySiswa(userId);
+        for (Tugas tugas : tugasList) {
+            HBox activityItem = createActivityItem(
+                "📋", 
+                "Tugas baru: " + tugas.getTitle() + " untuk kelas " + getNamaKelas(tugas.getKelasId()),
+                formatTimeAgo(tugas.getCreatedAt()), 
+                Color.web("#2196F3")
+            );
+            activitiesContainer.getChildren().add(activityItem);
+        }
         
         container.getChildren().addAll(sectionTitle, activitiesContainer);
         
         return container;
+    }
+    
+    private String formatTimeAgo(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "Tidak diketahui";
+        }
+        return formatTimeAgo(timestamp.toLocalDateTime());
+    }
+
+    // Helper method untuk format waktu
+    private String formatTimeAgo(LocalDateTime dateTime) {
+        if (dateTime == null) {
+            return "Tidak diketahui";
+        }
+        
+        LocalDateTime now = LocalDateTime.now();
+        Duration duration = Duration.between(dateTime, now);
+        
+        long seconds = duration.getSeconds();
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+        long weeks = days / 7;
+        long months = days / 30;
+        long years = days / 365;
+        
+        if (years > 0) {
+            return years + " tahun yang lalu";
+        } else if (months > 0) {
+            return months + " bulan yang lalu";
+        } else if (weeks > 0) {
+            return weeks + " minggu yang lalu";
+        } else if (days > 0) {
+            return days + " hari yang lalu";
+        } else if (hours > 0) {
+            return hours + " jam yang lalu";
+        } else if (minutes > 0) {
+            return minutes + " menit yang lalu";
+        } else {
+            return "Baru saja";
+        }
+    }
+
+    // Helper method untuk mendapatkan nama kelas
+    private String getNamaKelas(int kelasId) {
+        Kelas kelas = kelasController.getKelasById(kelasId);
+        return kelas != null ? kelas.getNama() : "Kelas Tidak Diketahui";
     }
     
     private HBox createActivityItem(String icon, String description, String time, Color color) {

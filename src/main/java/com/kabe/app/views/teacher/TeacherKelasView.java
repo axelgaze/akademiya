@@ -148,7 +148,7 @@ public class TeacherKelasView implements KelasInterface {
         logoLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
         logoLabel.setTextFill(Color.web("#E8F5E8"));
         
-        Label logoSubtitle = new Label("Platform Pembelajaran");
+        Label logoSubtitle = new Label("Panel Pengajar");
         logoSubtitle.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         logoSubtitle.setTextFill(Color.web("#C8E6C9"));
         
@@ -364,7 +364,7 @@ public class TeacherKelasView implements KelasInterface {
                               "-fx-border-width: 1; " +
                               "-fx-border-radius: 10;");
         
-        searchSection.getChildren().addAll(searchField, filterComboBox);
+        searchSection.getChildren().addAll(searchField);
         
         return searchSection;
     }
