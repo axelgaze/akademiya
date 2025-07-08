@@ -120,6 +120,14 @@ public class StudentKelasView implements KelasInterface {
         stage.setTitle("Akademiya - Kelas");
         stage.setScene(scene);
     }
+
+    private void showAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Peringatan");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
     
     private void createSidebar() {
         sidebar = new VBox(20);
@@ -348,13 +356,17 @@ public class StudentKelasView implements KelasInterface {
         
         joinBtn.setOnAction(e -> {
             String kodeKelas = joinField.getText().trim();
-            if (!kodeKelas.isEmpty()) {
-                kelasController.addStudentToClass(kelasController.getKelasByKode(kodeKelas).getId(), userController.getUser().getId());
-                System.out.println(kelasController.getKelasByKode(kodeKelas).getId());
-                joinField.clear();
-                if (navigationHandler != null) {
-                    navigationHandler.handleNavigation("Kelas");
+            if (kelasController.isKodeExists(kodeKelas)) {
+                if (!kodeKelas.isEmpty()) {
+                    kelasController.addStudentToClass(kelasController.getKelasByKode(kodeKelas).getId(), userController.getUser().getId());
+                    System.out.println(kelasController.getKelasByKode(kodeKelas).getId());
+                    joinField.clear();
+                    if (navigationHandler != null) {
+                        navigationHandler.handleNavigation("Kelas");
+                    }
                 }
+            } else {
+                showAlert("Kelas tidak ada!");
             }
         });
         

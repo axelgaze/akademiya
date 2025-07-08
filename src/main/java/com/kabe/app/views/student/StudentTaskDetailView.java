@@ -15,6 +15,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -29,6 +30,8 @@ import com.kabe.app.views.interfaces.ViewInterface;
 import com.kabe.app.models.TugasSiswa;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.awt.Desktop;
+import java.io.File;
 import java.nio.file.Files;
 
 import java.sql.Timestamp;
@@ -281,9 +284,163 @@ public class StudentTaskDetailView implements ViewInterface{
         description.setWrapText(true);
         
         descriptionContainer.getChildren().addAll(descriptionLabel, description);
+
+        if (tugas.getFileName() != null && !tugas.getFileName().isEmpty()) {
+            VBox materialContainer = new VBox(10);
+            materialContainer.setPadding(new Insets(20, 0, 0, 0));
+            
+            Label materialLabel = new Label("Material Tugas:");
+            materialLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+            materialLabel.setTextFill(Color.web("#4A148C"));
+            
+            HBox fileContainer = new HBox(15);
+            fileContainer.setAlignment(Pos.CENTER_LEFT);
+            fileContainer.setStyle("-fx-background-color: #F3E5F5; " +
+                                "-fx-background-radius: 10; " +
+                                "-fx-padding: 15;");
+            
+            // File icon based on type
+            String fileIcon = getFileIcon(tugas.getFileType());
+            Label iconLabel = new Label(fileIcon);
+            iconLabel.setFont(Font.font(24));
+            
+            VBox fileInfo = new VBox(5);
+            
+            Label fileNameLabel = new Label(tugas.getFileName());
+            fileNameLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+            fileNameLabel.setTextFill(Color.web("#333333"));
+            
+            Label fileTypeLabel = new Label(tugas.getFileType() + " • " + 
+                                        (tugas.getFileData() != null ? 
+                                        formatFileSize(tugas.getFileData().length) : 
+                                        "0 KB"));
+            fileTypeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+            fileTypeLabel.setTextFill(Color.web("#666666"));
+            
+            fileInfo.getChildren().addAll(fileNameLabel, fileTypeLabel);
+            
+            // Download button
+            Button downloadBtn = new Button("Unduh");
+            downloadBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+            downloadBtn.setStyle("-fx-background-color: #9C27B0; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-cursor: hand; " +
+                            "-fx-background-radius: 5; " +
+                            "-fx-padding: 5 15;");
+            
+            // Preview button (if supported file type)
+            if (isPreviewable(tugas.getFileType())) {
+                Button previewBtn = new Button("Pratinjau");
+                previewBtn.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+                previewBtn.setStyle("-fx-background-color: #2196F3; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-cursor: hand; " +
+                                "-fx-background-radius: 5; " +
+                                "-fx-padding: 5 15;");
+                
+                previewBtn.setOnAction(e -> previewFile(tugas));
+                
+                HBox buttonBox = new HBox(10, downloadBtn, previewBtn);
+                fileContainer.getChildren().addAll(iconLabel, fileInfo, buttonBox);
+            } else {
+                fileContainer.getChildren().addAll(iconLabel, fileInfo, downloadBtn);
+            }
+            
+            // Download functionality
+            downloadBtn.setOnAction(e -> downloadFile(tugas));
+            
+            materialContainer.getChildren().addAll(materialLabel, fileContainer);
+            descriptionContainer.getChildren().add(materialContainer);
+        }
         
         taskDetailsContainer.getChildren().addAll(titleContainer, infoGrid, descriptionContainer);
         root.getChildren().add(taskDetailsContainer);
+    }
+
+    private String getFileIcon(String fileType) {
+        if (fileType == null) return "📄";
+        
+        return switch (fileType.toLowerCase()) {
+            case "pdf" -> "📕";
+            case "doc", "docx" -> "📘";
+            case "xls", "xlsx" -> "📊";
+            case "ppt", "pptx" -> "📑";
+            case "jpg", "jpeg", "png", "gif" -> "🖼️";
+            case "zip", "rar" -> "🗄️";
+            default -> "📄";
+        };
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(1024));
+        String pre = "KMGTPE".charAt(exp-1) + "B";
+        return String.format("%.1f %s", bytes / Math.pow(1024, exp), pre);
+    }
+
+    private boolean isPreviewable(String fileType) {
+        if (fileType == null) return false;
+        String lowerType = fileType.toLowerCase();
+        return lowerType.equals("pdf") || 
+            lowerType.equals("docx") || // Tambahkan ini
+            lowerType.equals("doc") ||  // Dan ini untuk format lama
+            lowerType.equals("jpg") || 
+            lowerType.equals("jpeg") || 
+            lowerType.equals("png");
+    }
+
+    private void downloadFile(Tugas tugas) {
+        if (tugas.getFileData() == null || tugas.getFileData().length == 0) {
+            showAlert(Alert.AlertType.ERROR, "Error", "File tidak tersedia untuk diunduh");
+            return;
+        }
+        
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Simpan File Tugas");
+        fileChooser.setInitialFileName(tugas.getFileName());
+        
+        // Set extension filter based on file type
+        String extension = tugas.getFileType().toLowerCase();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter(
+            extension.toUpperCase() + " files (*." + extension + ")", "*." + extension);
+        fileChooser.getExtensionFilters().add(extFilter);
+        
+        File file = fileChooser.showSaveDialog(stage);
+        if (file != null) {
+            try {
+                Files.write(file.toPath(), tugas.getFileData());
+                showAlert(Alert.AlertType.INFORMATION, "Sukses", "File berhasil diunduh ke: " + file.getAbsolutePath());
+            } catch (IOException e) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Gagal menyimpan file: " + e.getMessage());
+            }
+        }
+    }
+
+    private void previewFile(Tugas tugas) {
+        if (tugas.getFileData() == null || tugas.getFileData().length == 0) {
+            showAlert(Alert.AlertType.ERROR, "Error", "File tidak tersedia untuk pratinjau");
+            return;
+        }
+        
+        try {
+            // Create temp file
+            File tempFile = File.createTempFile("preview_", "." + tugas.getFileType());
+            tempFile.deleteOnExit();
+            Files.write(tempFile.toPath(), tugas.getFileData());
+            
+            // Open with default application
+            Desktop.getDesktop().open(tempFile);
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Tidak dapat membuka file: " + e.getMessage());
+        }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     private void updateStatusBadgeStyle() {

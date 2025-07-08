@@ -236,15 +236,23 @@ public class BuatKelasView implements ViewInterface {
         String kode = kodeField.getText();
         String deskripsi = deskripsiArea.getText();
         int pengajarId = userController.getUser().getId();
+        if (kelasController.isKodeExists(kode)) {
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Gagal");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Kode kelas (" + kode + ") sudah ada!");
+            successAlert.showAndWait();
+        } else {
+            kelasController.createKelas(nama, kode, deskripsi, pengajarId);
+            // Show success message
+            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+            successAlert.setTitle("Sukses");
+            successAlert.setHeaderText(null);
+            successAlert.setContentText("Kelas " + nama + " berhasil dibuat!");
+            successAlert.showAndWait();
+        }
         
-        kelasController.createKelas(nama, kode, deskripsi, pengajarId);
         
-        // Show success message
-        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-        successAlert.setTitle("Sukses");
-        successAlert.setHeaderText(null);
-        successAlert.setContentText("Kelas " + nama + " berhasil dibuat!");
-        successAlert.showAndWait();
     }
 
     public KelasController getKelasController() {

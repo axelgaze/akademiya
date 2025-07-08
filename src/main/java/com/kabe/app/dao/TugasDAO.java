@@ -73,7 +73,7 @@ public class TugasDAO {
                     tugas.setTitle(rs.getString("title"));
                     tugas.setFileName(rs.getString("file_name"));
                     tugas.setFileType(rs.getString("file_type"));
-                    // Tidak mengambil file_data untuk efisiensi
+                    tugas.setFileData(rs.getBytes("file_data"));
                     tugas.setUploaderId(rs.getInt("uploader_id"));
                     tugas.setCreatedAt(rs.getTimestamp("created_at"));
                     tugas.setDeadline(rs.getTimestamp("deadline"));
@@ -113,7 +113,7 @@ public class TugasDAO {
                     tugas.setTitle(rs.getString("title"));
                     tugas.setFileName(rs.getString("file_name"));
                     tugas.setFileType(rs.getString("file_type"));
-                    // Tidak mengambil file_data untuk efisiensi
+                    tugas.setFileData(rs.getBytes("file_data"));
                     tugas.setUploaderId(rs.getInt("uploader_id"));
                     tugas.setCreatedAt(rs.getTimestamp("created_at"));
                     tugas.setDeadline(rs.getTimestamp("deadline"));
@@ -201,6 +201,40 @@ public class TugasDAO {
         ts.setFeedbackAt(rs.getTimestamp("feedback_at"));
         ts.setCreatedAt(rs.getTimestamp("created_at"));
         return ts;
+    }
+
+    public Tugas getTugasWithFileData(int tugasId) {
+        String sql = "SELECT * FROM tugas WHERE id = ?";
+        
+        try (Connection conn = dbConnector.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setInt(1, tugasId);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    Tugas tugas = new Tugas();
+                    tugas.setId(rs.getInt("id"));
+                    tugas.setKelasId(rs.getInt("kelas_id"));
+                    tugas.setTitle(rs.getString("title"));
+                    tugas.setFileName(rs.getString("file_name"));
+                    tugas.setFileType(rs.getString("file_type"));
+                    tugas.setFileData(rs.getBytes("file_data")); // Ini yang membedakan
+                    tugas.setUploaderId(rs.getInt("uploader_id"));
+                    tugas.setCreatedAt(rs.getTimestamp("created_at"));
+                    tugas.setDeadline(rs.getTimestamp("deadline"));
+                    tugas.setDeskripsi(rs.getString("deskripsi"));
+                    tugas.setTipe(rs.getString("tipe"));
+                    
+                    return tugas;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting complete task with ID " + tugasId + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return null;
     }
 
     public boolean deleteTugasSiswa(int idTugasSiswa, int idSiswa) {
